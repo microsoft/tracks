@@ -3,6 +3,10 @@ Tracks
 
 Tracks is Track Point Monitor API sample focusing on visualising the routes on the screen.
 
+For more information on implementation, visit Nokia Lumia Developer's Library: 
+http://developer.nokia.com/resources/library/Lumia/sensorcore-sdk/samples.html
+http://developer.nokia.com/resources/library/Lumia/sensorcore-sdk/track-point-monitor-api.html
+
 1. Instructions
 --------------------------------------------------------------------------------
 
@@ -69,8 +73,15 @@ available online at https://github.com/nokia-developer/tracks/blob/master/Licens
 
 * Version 1.0: The first release.
 
+5. Downloads
+---------
 
-5. See also
+| Project | Release | Download |
+| ------- | --------| -------- |
+| Tracks | v1.0 | [tracks-1.0.zip](https://github.com/nokia-developer/tracks/archive/v1.0.zip) |
+
+
+6. See also
 --------------------------------------------------------------------------------
 
 The projects listed below are exemplifying the usage of the SensorCore APIs
