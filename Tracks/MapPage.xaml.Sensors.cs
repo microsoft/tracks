@@ -40,6 +40,7 @@ namespace Tracks
                     }
                     else
                     {
+
                         Application.Current.Exit();
                     }
                 }
@@ -60,11 +61,15 @@ namespace Tracks
                     }
                 };
             }
-            // comment out for the TrackPointMonitorSimulator
             else
             {
-                SelectButton.IsEnabled = false;
-                FilterButton.IsEnabled = false;
+                MessageDialog dialog;
+                dialog = new MessageDialog("Your device doesn't support Motion Data. Application will be closed", "Information");
+                dialog.Commands.Add(new UICommand("OK"));
+                await dialog.ShowAsync();
+                new System.Threading.ManualResetEvent(false).WaitOne(500);
+
+                Application.Current.Exit();
             }
         }
 
@@ -227,7 +232,7 @@ namespace Tracks
                 switch (SenseHelper.GetSenseError(failure.HResult))
                 {
                     case SenseError.LocationDisabled:
-                        dialog = new MessageDialog("Location has been disabled. Do you want to open Location settings now?", "Information");
+                        dialog = new MessageDialog("Location has been disabled. Do you want to open Location settings now? If you choose no, application will exit.", "Information");
                         dialog.Commands.Add(new UICommand("Yes", async cmd => await SenseHelper.LaunchLocationSettingsAsync()));
                         dialog.Commands.Add(new UICommand("No"));
                         await dialog.ShowAsync();
@@ -235,7 +240,7 @@ namespace Tracks
                         return false;
 
                     case SenseError.SenseDisabled:
-                        dialog = new MessageDialog("Motion data has been disabled. Do you want to open Motion data settings now?", "Information");
+                        dialog = new MessageDialog("Motion data has been disabled. Do you want to open Motion data settings now? If you choose no, application will exit.", "Information");
                         dialog.Commands.Add(new UICommand("Yes", async cmd => await SenseHelper.LaunchSenseSettingsAsync()));
                         dialog.Commands.Add(new UICommand("No"));
                         await dialog.ShowAsync();
@@ -243,7 +248,7 @@ namespace Tracks
                         return false;
 
                     default:
-                        dialog = new MessageDialog("Failure: " + SenseHelper.GetSenseError(failure.HResult), "");
+                        dialog = new MessageDialog("Failure: " + SenseHelper.GetSenseError(failure.HResult) + " while initializing Motion data. Application will exit.", "");
                         await dialog.ShowAsync();
                         return false;
                 }

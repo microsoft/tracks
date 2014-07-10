@@ -42,7 +42,7 @@ namespace Tracks
             this.listSource.Source = optionList;
             this.filterSource.Source = filterList;
 
-            TracksMap.MapServiceToken = "XXX";
+            TracksMap.MapServiceToken = "xxx";
 
             this.Loaded += async (sender, args) =>
             {

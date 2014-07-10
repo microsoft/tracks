@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest" xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
-  <Identity Name="NokiaDeveloper.tracksbeta" Publisher="CN=4AD6DA08-6C39-4A10-98CC-3243374DA59C" Version="1.1.0.1" />
-  <mp:PhoneIdentity PhoneProductId="745277f6-063c-4211-9f29-316c15385f32" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Identity Name="NokiaDeveloper.TracksLumiaSensorCoreSDKsample" Publisher="CN=4AD6DA08-6C39-4A10-98CC-3243374DA59C" Version="1.1.0.1" />
+  <mp:PhoneIdentity PhoneProductId="a84218a0-8add-40b1-b646-284d23bccaa1" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>tracks (beta)</DisplayName>
+    <DisplayName>Tracks – Lumia SensorCore SDK sample</DisplayName>
     <PublisherDisplayName>Nokia Developer</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -16,7 +16,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="Tracks.App">
-      <m3:VisualElements DisplayName="tracks (beta)" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" Description="Tracks" ForegroundText="light" BackgroundColor="transparent">
+      <m3:VisualElements DisplayName="Tracks – Lumia SensorCore SDK sample" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" Description="Tracks is a sample application demonstrating the usage of Track Point Monitor API. This application shows the recorded track points, as well as the approximate route the user has taken by drawing lines between the track points. Track points can be filtered to show only track points from a certain day of the last week, or track points where the user has stayed at one point for a defined amount of time." ForegroundText="light" BackgroundColor="transparent">
         <m3:DefaultTile Wide310x150Logo="Assets\WideLogo.png" Square71x71Logo="Assets\Square71x71Logo.png">
         </m3:DefaultTile>
         <m3:SplashScreen Image="Assets\SplashScreen.png" />
