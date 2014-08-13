@@ -40,6 +40,8 @@
         <Grid Grid.Row="1" x:Name="ContentRoot">
             <maps:MapControl x:Name="TracksMap" Margin="0,0,0,0" 
                             MapTapped="OnTapped" />
+            <TextBlock x:Name="FilterTime" 
+                       FontSize="24" TextAlignment="Right" Width="480" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="#7F000000" Margin="5,5"/>
         </Grid>
     </Grid>
     <Page.BottomAppBar>

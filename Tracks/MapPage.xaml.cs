@@ -54,7 +54,8 @@ namespace Tracks
                     DrawRoute();
                 }
 
-                DateFlyout.SelectedIndex = optionList.Count - 1;
+                DateFlyout.SelectedIndex = 0;
+                FilterTime.Text = optionList[0].Name;
             };
         }
 
@@ -243,6 +244,8 @@ namespace Tracks
                 selected = (DaySelectionItem)args.AddedItems[0];
             }
             DrawRoute();
+
+            FilterTime.Text = ((DaySelectionItem) args.AddedItems[0]).Name;
         }
     }
 }
