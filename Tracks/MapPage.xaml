@@ -14,10 +14,10 @@
         <CollectionViewSource x:Name="listSource"/>
         <CollectionViewSource x:Name="filterSource"/>
     </Page.Resources>
-    
-        <Grid x:Name="LayoutRoot">
+
+    <Grid x:Name="LayoutRoot">
         <Grid.Resources>
-            
+
         </Grid.Resources>
         <Grid.ChildrenTransitions>
             <TransitionCollection>
@@ -31,7 +31,7 @@
         </Grid.RowDefinitions>
 
         <!-- TitlePanel -->
-        <StackPanel Grid.Row="0" Margin="24,17,0,28">
+        <StackPanel x:Name="topPanel" Grid.Row="0" Margin="24,17,0,28">
             <TextBlock x:Uid="Application" Text="" Style="{ThemeResource TitleTextBlockStyle}" Typography.Capitals="SmallCaps" Foreground="Black"/>
             <TextBlock Text="tracks" Margin="0,12,0,0" Style="{ThemeResource HeaderTextBlockStyle}" Foreground="Black"/>
         </StackPanel>
@@ -42,10 +42,16 @@
                             MapTapped="OnTapped" />
             <TextBlock x:Name="FilterTime" 
                        FontSize="24" TextAlignment="Right" Width="480" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="#7F000000" Margin="5,5"/>
+
+            <SymbolIcon x:Name="FullScreeButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,15,15" Symbol="FullScreen" Tapped="FullScreeButton_OnTapped" RenderTransformOrigin="0.5,0.5">
+                <controls1:SymbolIcon.RenderTransform>
+                    <controls1:CompositeTransform ScaleX="2" ScaleY="2"/>
+                </controls1:SymbolIcon.RenderTransform>
+            </SymbolIcon>
         </Grid>
     </Grid>
     <Page.BottomAppBar>
-        <CommandBar Background="#F0A30A" Foreground="Black">
+        <CommandBar x:Name="cmdBar" Background="#F0A30A" Foreground="Black">
             <AppBarButton x:Uid="SelectButton" x:Name="SelectButton" Label="select">
                 <AppBarButton.Icon>
                     <BitmapIcon UriSource="/Assets/calendar-icon.png"/>

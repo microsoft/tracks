@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using Windows.Devices.Enumeration;
 using Windows.Storage.Streams;
 using Windows.UI;
+using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
 using Windows.Devices.Geolocation;
 using Windows.UI.Xaml;
 using Windows.UI.Popups;
 using Windows.UI.Core;
+using Windows.UI.Xaml.Input;
 using Lumia.Sense;
 using Tracks.Utilities;
 using Tracker = Lumia.Sense.TrackPointMonitor;
@@ -22,7 +24,7 @@ namespace Tracks
     public sealed partial class MapPage
     {
         private Tracker tracker;
-        
+        private bool fullScreen;
         /// <summary>
         /// Initialize SensorCore
         /// </summary>
@@ -255,6 +257,24 @@ namespace Tracks
             }
 
             return true;
+        }
+
+        private void FullScreeButton_OnTapped(object sender, TappedRoutedEventArgs e)
+        {
+            fullScreen = !fullScreen;
+
+            if (fullScreen)
+            {
+                cmdBar.Visibility = Visibility.Collapsed;
+                topPanel.Visibility = Visibility.Collapsed;
+                FullScreeButton.Symbol = Symbol.BackToWindow;
+            }
+            else
+            {
+                cmdBar.Visibility = Visibility.Visible;
+                topPanel.Visibility = Visibility.Visible;
+                FullScreeButton.Symbol = Symbol.FullScreen;
+            }
         }
     }
 }
