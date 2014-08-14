@@ -25,12 +25,13 @@ namespace Tracks
     {
         private Tracker tracker;
         private bool fullScreen;
+
         /// <summary>
         /// Initialize SensorCore
         /// </summary>
         private async Task InitCore()
         {
-             // IsSupportedAsync is not implemented by the simulator, comment out for the TrackPointMonitorSimulator
+            // IsSupportedAsync is not implemented by the simulator, comment out for the TrackPointMonitorSimulator
             if (await Tracker.IsSupportedAsync())
             {
                 if (tracker == null)
@@ -66,7 +67,8 @@ namespace Tracks
             else
             {
                 MessageDialog dialog;
-                dialog = new MessageDialog("Your device doesn't support Motion Data. Application will be closed", "Information");
+                dialog = new MessageDialog("Your device doesn't support Motion Data. Application will be closed",
+                    "Information");
                 dialog.Commands.Add(new UICommand("OK"));
                 await dialog.ShowAsync();
                 new System.Threading.ManualResetEvent(false).WaitOne(500);
@@ -92,7 +94,8 @@ namespace Tracks
                 }
                 else
                 {
-                    points = await tracker.GetTrackPointsAsync(DateTime.Now - TimeSpan.FromDays(10), TimeSpan.FromDays(10));
+                    points =
+                        await tracker.GetTrackPointsAsync(DateTime.Now - TimeSpan.FromDays(10), TimeSpan.FromDays(10));
                 }
             }))
             {
@@ -103,11 +106,9 @@ namespace Tracks
 
                     var previous = new BasicGeoposition();
                     bool first = true;
-                    
+
                     foreach (var p in points)
                     {
-                       
-                        Debug.WriteLine("Lat:{0} Lon:{1} Rad:{2} Time:{3} Length:{4} ", p.Position.Latitude.ToString(), p.Position.Longitude, p.Radius, p.Timestamp, p.LengthOfStay);
                         switch (filterTime)
                         {
                             case 0:
@@ -139,8 +140,9 @@ namespace Tracks
                                 Path = new Geopath(new List<BasicGeoposition> {previous, p.Position}),
                                 StrokeThickness = 3,
                                 StrokeColor = Color.FromArgb(255, 100, 100, 255),
-                                StrokeDashed = true
+                                StrokeDashed = false
                             };
+
                             TracksMap.MapElements.Add(mapShape);
                         }
                         else
@@ -195,11 +197,13 @@ namespace Tracks
                 }
                 else if (DeviceAccessStatus.DeniedBySystem == args.Status)
                 {
-                    Debug.WriteLine("Location has been disabled by the system. The administrator of the device must enable location access through the location control panel.");
+                    Debug.WriteLine(
+                        "Location has been disabled by the system. The administrator of the device must enable location access through the location control panel.");
                 }
                 else if (DeviceAccessStatus.Unspecified == args.Status)
                 {
-                    Debug.WriteLine("Location has been disabled by unspecified source. The administrator of the device may need to enable location access through the location control panel, then enable access through the settings charm.");
+                    Debug.WriteLine(
+                        "Location has been disabled by unspecified source. The administrator of the device may need to enable location access through the location control panel, then enable access through the settings charm.");
                 }
                 else if (DeviceAccessStatus.Allowed == args.Status)
                 {
@@ -234,47 +238,40 @@ namespace Tracks
                 switch (SenseHelper.GetSenseError(failure.HResult))
                 {
                     case SenseError.LocationDisabled:
-                        dialog = new MessageDialog("Location has been disabled. Do you want to open Location settings now? If you choose no, application will exit.", "Information");
-                        dialog.Commands.Add(new UICommand("Yes", async cmd => await SenseHelper.LaunchLocationSettingsAsync()));
+                        dialog =
+                            new MessageDialog(
+                                "Location has been disabled. Do you want to open Location settings now? If you choose no, application will exit.",
+                                "Information");
+                        dialog.Commands.Add(new UICommand("Yes",
+                            async cmd => await SenseHelper.LaunchLocationSettingsAsync()));
                         dialog.Commands.Add(new UICommand("No"));
                         await dialog.ShowAsync();
                         new System.Threading.ManualResetEvent(false).WaitOne(500);
                         return false;
 
                     case SenseError.SenseDisabled:
-                        dialog = new MessageDialog("Motion data has been disabled. Do you want to open Motion data settings now? If you choose no, application will exit.", "Information");
-                        dialog.Commands.Add(new UICommand("Yes", async cmd => await SenseHelper.LaunchSenseSettingsAsync()));
+                        dialog =
+                            new MessageDialog(
+                                "Motion data has been disabled. Do you want to open Motion data settings now? If you choose no, application will exit.",
+                                "Information");
+                        dialog.Commands.Add(new UICommand("Yes",
+                            async cmd => await SenseHelper.LaunchSenseSettingsAsync()));
                         dialog.Commands.Add(new UICommand("No"));
                         await dialog.ShowAsync();
                         new System.Threading.ManualResetEvent(false).WaitOne(500);
                         return false;
 
                     default:
-                        dialog = new MessageDialog("Failure: " + SenseHelper.GetSenseError(failure.HResult) + " while initializing Motion data. Application will exit.", "");
+                        dialog =
+                            new MessageDialog(
+                                "Failure: " + SenseHelper.GetSenseError(failure.HResult) +
+                                " while initializing Motion data. Application will exit.", "");
                         await dialog.ShowAsync();
                         return false;
                 }
             }
 
             return true;
-        }
-
-        private void FullScreeButton_OnTapped(object sender, TappedRoutedEventArgs e)
-        {
-            fullScreen = !fullScreen;
-
-            if (fullScreen)
-            {
-                cmdBar.Visibility = Visibility.Collapsed;
-                topPanel.Visibility = Visibility.Collapsed;
-                FullScreeButton.Symbol = Symbol.BackToWindow;
-            }
-            else
-            {
-                cmdBar.Visibility = Visibility.Visible;
-                topPanel.Visibility = Visibility.Visible;
-                FullScreeButton.Symbol = Symbol.FullScreen;
-            }
         }
     }
 }

@@ -7,6 +7,7 @@ using Windows.Globalization;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using Tracks.Common;
 using Tracks.Utilities;
@@ -32,7 +33,7 @@ namespace Tracks
         public MapPage()
         {
             this.InitializeComponent();
-            
+
             this.navigationHelper = new NavigationHelper(this);
             this.navigationHelper.LoadState += this.NavigationHelper_LoadState;
             this.navigationHelper.SaveState += this.NavigationHelper_SaveState;
@@ -47,7 +48,7 @@ namespace Tracks
             this.Loaded += async (sender, args) =>
             {
                 await InitCore();
-                
+
                 // This is not implemented by the simulator, uncomment for the RouteTracker
                 if (await Tracker.IsSupportedAsync())
                 {
@@ -59,11 +60,6 @@ namespace Tracks
             };
         }
 
-        private void CalculateMapSize()
-        {
-            TracksMap.Width = Window.Current.Bounds.Width;
-            TracksMap.Height = LayoutRoot.RowDefinitions[1].ActualHeight;
-        }
         /// <summary>
         /// Fill the list with current day of week, and in descending order rest of the weekdays
         /// </summary>
@@ -74,9 +70,9 @@ namespace Tracks
             int count = 0;
             for (int i = today; i >= 0; i--)
             {
-                var item = new DaySelectionItem {Day = DateTime.Now.Date - TimeSpan.FromDays(count)};
+                var item = new DaySelectionItem { Day = DateTime.Now.Date - TimeSpan.FromDays(count) };
                 var nameOfDay = System.Globalization.DateTimeFormatInfo.CurrentInfo.DayNames[i];
-                
+
                 // Add an indicator to current day
                 if (count == 0)
                 {
@@ -85,7 +81,7 @@ namespace Tracks
 
                 GeographicRegion userRegion = new GeographicRegion();
 
-                var userDateFormat = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shortdate",new [] {userRegion.Code});
+                var userDateFormat = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shortdate", new[] { userRegion.Code });
                 var dateDefault = userDateFormat.Format(item.Day);
 
                 item.Name = nameOfDay + " " + dateDefault;
@@ -245,7 +241,25 @@ namespace Tracks
             }
             DrawRoute();
 
-            FilterTime.Text = ((DaySelectionItem) args.AddedItems[0]).Name;
+            FilterTime.Text = ((DaySelectionItem)args.AddedItems[0]).Name;
+        }
+
+        private void FullScreeButton_OnTapped(object sender, TappedRoutedEventArgs e)
+        {
+            fullScreen = !fullScreen;
+
+            if (fullScreen)
+            {
+                CmdBar.Visibility = Visibility.Collapsed;
+                TopPanel.Visibility = Visibility.Collapsed;
+                FullScreeButton.Symbol = Symbol.BackToWindow;
+            }
+            else
+            {
+                CmdBar.Visibility = Visibility.Visible;
+                TopPanel.Visibility = Visibility.Visible;
+                FullScreeButton.Symbol = Symbol.FullScreen;
+            }
         }
     }
 }
