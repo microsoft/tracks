@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="#A4C400">
+    Background="#F0A30A">
 
     <Grid x:Name="LayoutRoot">
 
@@ -29,7 +29,8 @@
 
         <StackPanel x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
             <RichTextBlock FontSize="16">
-                <Paragraph>
+                <Paragraph FontWeight="Bold">
+                    <Run x:Uid="ApplicationName" Text="" Foreground="Black"/>
                     <Run x:Uid="Version" Text="" Foreground="Black"/>
                     <Run x:Name="VersionNumber" Text="" Foreground="Black"/>
                 </Paragraph>
@@ -41,14 +42,17 @@
                 <Paragraph>
                     <Run x:Uid="AboutDisclaimer" Text="" Foreground="Black"/>
                 </Paragraph>
-                <Paragraph/>
-                <Paragraph>
-                    <Run x:Uid="AboutMore" Text="" Foreground="Black"/>
-                </Paragraph>
-                <Paragraph/>
             </RichTextBlock>
-            <HyperlinkButton NavigateUri="http://developer.nokia.com"
-                Content="Nokia Developer website" FontSize="24"/>
+            <HyperlinkButton NavigateUri="https://github.com/nokia-developer/tracks">
+                <HyperlinkButton.Content>
+                    <TextBlock
+                            Margin="6,12,0,0"
+                            Style="{ThemeResource BodyTextBlockStyle}"
+                            Foreground="Black"
+                            TextWrapping="Wrap"
+                            Text="Tracks project in GitHub" />
+                </HyperlinkButton.Content>
+            </HyperlinkButton>
         </StackPanel>
     </Grid>
 </Page>

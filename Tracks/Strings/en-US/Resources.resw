@@ -117,14 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AboutButton.Label" xml:space="preserve">
+    <value>about</value>
+  </data>
   <data name="AboutDescription.Text" xml:space="preserve">
-    <value>This developer sample demonstrates Lumia SensorCore SDK RouteTracker API functionality.</value>
+    <value>The Tracks developer sample application demonstrates Lumia SensorCore SDK's Track Point Monitor API functionality.</value>
   </data>
   <data name="AboutDisclaimer.Text" xml:space="preserve">
-    <value>This Nokia developer example application has been created to provide tips and best practice guidance for software developers and app designers, and may not have all the features you would expect in a commercial product. This application is published in Store as a free software as it may also have value to regular Nokia phone users. The source code and documentation of this example can be downloaded from Nokia Developer website.</value>
-  </data>
-  <data name="AboutHyperlinkProject.Text" xml:space="preserve">
-    <value>Nokia Developer website</value>
+    <value>This developer sample application has been created to provide tips and best practice guidance for software developers and app designers, and may not have all the features you would expect in a commercial product. This application is published in Store as a free software as it may also have value to regular phone users. The source code and more information about this sample can be found in GitHub:</value>
   </data>
   <data name="AboutPage.Text" xml:space="preserve">
     <value>about</value>
@@ -145,6 +145,9 @@
   <data name="Application.Text" xml:space="preserve">
     <value>LUMIA SENSORCORE SAMPLE</value>
   </data>
+  <data name="ApplicationName.Text" xml:space="preserve">
+    <value>Tracks</value>
+  </data>
   <data name="Header.Text" xml:space="preserve">
     <value>Tracks</value>
   </data>
@@ -162,5 +165,8 @@
   </data>
   <data name="Today" xml:space="preserve">
     <value>(Today)</value>
+  </data>
+  <data name="Version.Text" xml:space="preserve">
+    <value>version</value>
   </data>
 </root>
