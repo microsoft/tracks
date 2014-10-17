@@ -90,12 +90,14 @@ namespace Tracks
                 // Get selected day routes, else all routes from last 10 days
                 if (selected != null && !selected.Name.Equals("All", StringComparison.CurrentCultureIgnoreCase))
                 {
+                    System.Diagnostics.Debug.WriteLine("DrawRoute: " + selected.Name);
                     points = await tracker.GetTrackPointsAsync(selected.Day, TimeSpan.FromHours(24));
                 }
                 else
                 {
-                    points =
-                        await tracker.GetTrackPointsAsync(DateTime.Now - TimeSpan.FromDays(10), TimeSpan.FromDays(10));
+                    System.Diagnostics.Debug.WriteLine("DrawRoute: Drawing all");
+                    points = await tracker.GetTrackPointsAsync(
+                        DateTime.Now - TimeSpan.FromDays(10), TimeSpan.FromDays(10));
                 }
             }))
             {

@@ -30,6 +30,7 @@ namespace Tracks
         private readonly List<string> filterList = new List<string>();
         ResourceLoader loader = new ResourceLoader();
         private int filterTime = 0; // Defines how small duration is shown
+
         public MapPage()
         {
             this.InitializeComponent();
@@ -45,6 +46,8 @@ namespace Tracks
 
             TracksMap.MapServiceToken = "xxx";
 
+            selected = optionList[0];
+
             this.Loaded += async (sender, args) =>
             {
                 await InitCore();
@@ -56,7 +59,7 @@ namespace Tracks
                 }
 
                 DateFlyout.SelectedIndex = 0;
-                FilterTime.Text = optionList[0].Name;
+                FilterTime.Text = selected != null ? selected.Name : loader.GetString("NoTimespanSelected/Text");
             };
         }
 
@@ -66,8 +69,8 @@ namespace Tracks
         private void FillDateList()
         {
             int today = (int)DateTime.Now.DayOfWeek; // Current day
-
             int count = 0;
+
             for (int i = today; i >= 0; i--)
             {
                 var item = new DaySelectionItem { Day = DateTime.Now.Date - TimeSpan.FromDays(count) };
@@ -76,7 +79,7 @@ namespace Tracks
                 // Add an indicator to current day
                 if (count == 0)
                 {
-                    nameOfDay += loader.GetString("Today");
+                    nameOfDay += " " + loader.GetString("Today");
                 }
 
                 GeographicRegion userRegion = new GeographicRegion();
@@ -238,10 +241,9 @@ namespace Tracks
             if (args.AddedItems.Count == 1)
             {
                 selected = (DaySelectionItem)args.AddedItems[0];
+                DrawRoute();
+                FilterTime.Text = selected.Name;
             }
-            DrawRoute();
-
-            FilterTime.Text = ((DaySelectionItem)args.AddedItems[0]).Name;
         }
 
         private void FullScreeButton_OnTapped(object sender, TappedRoutedEventArgs e)

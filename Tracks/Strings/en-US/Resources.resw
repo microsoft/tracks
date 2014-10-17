@@ -160,6 +160,9 @@
   <data name="NavigationFailedExceptionMessage" xml:space="preserve">
     <value>Navigation failed.</value>
   </data>
+  <data name="NoTimespanSelected.Text" xml:space="preserve">
+    <value>No timespan selected</value>
+  </data>
   <data name="Pivot.Title" xml:space="preserve">
     <value>Tracks</value>
   </data>
