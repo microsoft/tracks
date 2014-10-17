@@ -73,6 +73,7 @@ available online at https://github.com/nokia-developer/tracks/blob/master/Licens
 4. Version history
 --------------------------------------------------------------------------------
 
+* Version 1.2.1: Bug fixes.
 * Version 1.2: Updated to use version 1.0 of Lumia SensorCore SDK.
 * Version 1.0: The first release.
 
@@ -82,7 +83,7 @@ available online at https://github.com/nokia-developer/tracks/blob/master/Licens
 
 | Project | Release | Download |
 | ------- | --------| -------- |
-| Tracks | v1.2 | [tracks-1.2.zip](https://github.com/nokia-developer/tracks/archive/v1.2.zip) |
+| Tracks | v1.2.1 | [tracks-1.2.1.zip](https://github.com/nokia-developer/tracks/archive/v1.2.1.zip) |
 | Tracks | v1.0 | [tracks-1.0.zip](https://github.com/nokia-developer/tracks/archive/v1.0.zip) |
 
 
