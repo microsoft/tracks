@@ -4,7 +4,7 @@
   <mp:PhoneIdentity PhoneProductId="a84218a0-8add-40b1-b646-284d23bccaa1" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>Tracks – Lumia SensorCore SDK sample</DisplayName>
-    <PublisherDisplayName>Microsoft Mobile</PublisherDisplayName>
+    <PublisherDisplayName>Nokia Developer</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Prerequisites>
