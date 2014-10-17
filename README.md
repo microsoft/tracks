@@ -73,8 +73,12 @@ available online at https://github.com/nokia-developer/tracks/blob/master/Licens
 4. Version history
 --------------------------------------------------------------------------------
 
-* Version 1.2.1: Bug fixes.
-* Version 1.2: Updated to use version 1.0 of Lumia SensorCore SDK.
+* Version 1.2.1: Bug fixes
+* Version 1.2:
+ * Updated to use version 1.0 of Lumia SensorCore SDK
+ * Full screen mode added
+ * Overlay text indicating the active date filter selection added on the map view
+ * Default/opening view changed to “Today” (from previous “All”)
 * Version 1.0: The first release.
 
 
