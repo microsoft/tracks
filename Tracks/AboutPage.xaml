@@ -7,26 +7,21 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="#F0A30A">
-
     <Grid x:Name="LayoutRoot">
-
         <Grid.ChildrenTransitions>
             <TransitionCollection>
                 <EntranceThemeTransition/>
             </TransitionCollection>
         </Grid.ChildrenTransitions>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
         <!-- TitlePanel -->
         <StackPanel Grid.Row="0" Margin="24,17,0,28">
             <TextBlock x:Uid="Application" Text="" Style="{ThemeResource TitleTextBlockStyle}" Typography.Capitals="SmallCaps" Foreground="Black"/>
             <TextBlock x:Uid="AboutPage" Text="" Margin="0,12,0,0" Style="{ThemeResource HeaderTextBlockStyle}" Foreground="Black"/>
         </StackPanel>
-
         <StackPanel x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
             <RichTextBlock FontSize="16">
                 <Paragraph FontWeight="Bold">
@@ -43,7 +38,7 @@
                     <Run x:Uid="AboutDisclaimer" Text="" Foreground="Black"/>
                 </Paragraph>
             </RichTextBlock>
-            <HyperlinkButton NavigateUri="https://github.com/nokia-developer/tracks">
+            <HyperlinkButton NavigateUri="https://github.com/Microsoft/tracks">
                 <HyperlinkButton.Content>
                     <TextBlock
                             Margin="6,12,0,0"

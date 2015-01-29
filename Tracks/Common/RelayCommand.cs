@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2015 Microsoft
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
+ */
+using System;
 using System.Windows.Input;
 
 namespace Tracks.Common
@@ -12,15 +31,23 @@ namespace Tracks.Common
     /// </summary>
     public class RelayCommand : ICommand
     {
-        private readonly Action execute;
-        private readonly Func<bool> canExecute;
+        #region Private members
+        /// <summary>
+        /// Points to a method that will execute
+        /// </summary>
+        private readonly Action _execute; 
+
+        /// <summary>
+        /// Determines if the action can or cannot execute
+        /// </summary>
+        private readonly Func<bool> _canExecute;
+        #endregion
 
         /// <summary>
         /// Initializes a new instance of <see cref="RelayCommand"/> that can always execute.
         /// </summary>
         /// <param name="execute">The execution logic.</param>
-        public RelayCommand(Action execute)
-            : this(execute, canExecute: null)
+        public RelayCommand(Action execute) : this(execute, canExecute: null)
         {
         }
 
@@ -35,9 +62,8 @@ namespace Tracks.Common
             {
                 throw new ArgumentNullException("execute");
             }
-
-            this.execute = execute;
-            this.canExecute = canExecute;
+            this._execute = execute;
+            this._canExecute = canExecute;
         }
 
         /// <summary>
@@ -54,7 +80,7 @@ namespace Tracks.Common
         /// <returns>True if this command can be executed; otherwise, false.</returns>
         public bool CanExecute(object parameter)
         {
-            return this.canExecute == null ? true : this.canExecute();
+            return this._canExecute == null ? true : this._canExecute();
         }
 
         /// <summary>
@@ -65,7 +91,7 @@ namespace Tracks.Common
         /// </param>
         public void Execute(object parameter)
         {
-            this.execute();
+            this._execute();
         }
 
         /// <summary>

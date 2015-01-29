@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2015 Microsoft
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
+ */
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
@@ -19,23 +38,39 @@ namespace Tracks.Common
     /// </summary>
     internal sealed class SuspensionManager
     {
-        private const string SessionStateFilename = "_sessionState.xml";
+        #region Constant definitions
+        /// <summary>
+        /// The session state filename.
+        /// </summary>
+        private const string _SessionStateFilename = "_sessionState.xml";
+        #endregion
 
-        private static readonly DependencyProperty FrameSessionStateKeyProperty = DependencyProperty.RegisterAttached(
-            "_FrameSessionStateKey",
-            typeof(string),
-            typeof(SuspensionManager),
-            defaultMetadata: null);
+        #region Private members
+        /// <summary>
+        /// Represents the frame session state key property.
+        /// </summary>
+        private static readonly DependencyProperty _FrameSessionStateKeyProperty = DependencyProperty.RegisterAttached("_FrameSessionStateKey", typeof(string), typeof(SuspensionManager), defaultMetadata: null);
 
-        private static readonly DependencyProperty FrameSessionStateProperty = DependencyProperty.RegisterAttached(
-            "_FrameSessionState",
-            typeof(Dictionary<string, object>),
-            typeof(SuspensionManager),
-            defaultMetadata: null);
+        /// <summary>
+        /// Represents the frame session state property.
+        /// </summary>
+        private static readonly DependencyProperty _FrameSessionStateProperty = DependencyProperty.RegisterAttached("_FrameSessionState", typeof(Dictionary<string, object>), typeof(SuspensionManager), defaultMetadata: null);
 
-        private static readonly List<Type> KnownTypesInternal = new List<Type>();
-        private static readonly List<WeakReference<Frame>> RegisteredFrames = new List<WeakReference<Frame>>();
-        private static Dictionary<string, object> sessionState = new Dictionary<string, object>();
+        /// <summary>
+        /// Represents the _known types.
+        /// </summary>
+        private static readonly List<Type> _KnownTypesInternal = new List<Type>();
+
+        /// <summary>
+        /// Represents the _registered frames.
+        /// </summary>
+        private static readonly List<WeakReference<Frame>> _RegisteredFrames = new List<WeakReference<Frame>>();
+
+        /// <summary>
+        /// Represents the _session state.
+        /// </summary>
+        private static Dictionary<string, object> _sessionState = new Dictionary<string, object>();
+        #endregion
 
         /// <summary>
         /// Gets the global session state for the current session.  This state is
@@ -46,7 +81,7 @@ namespace Tracks.Common
         /// </summary>
         public static Dictionary<string, object> SessionState
         {
-            get { return sessionState; }
+            get { return _sessionState; }
         }
 
         /// <summary>
@@ -56,7 +91,7 @@ namespace Tracks.Common
         /// </summary>
         public static List<Type> KnownTypes
         {
-            get { return KnownTypesInternal; }
+            get { return _KnownTypesInternal; }
         }
 
         /// <summary>
@@ -71,7 +106,7 @@ namespace Tracks.Common
             try
             {
                 // Save the navigation state for all registered frames
-                foreach (var weakFrameReference in RegisteredFrames)
+                foreach (var weakFrameReference in _RegisteredFrames)
                 {
                     Frame frame;
                     if (weakFrameReference.TryGetTarget(out frame))
@@ -79,14 +114,12 @@ namespace Tracks.Common
                         SaveFrameNavigationState(frame);
                     }
                 }
-
                 // Serialize the session state synchronously to avoid asynchronous access to shared state
                 MemoryStream sessionData = new MemoryStream();
-                DataContractSerializer serializer = new DataContractSerializer(typeof(Dictionary<string, object>), KnownTypesInternal);
-                serializer.WriteObject(sessionData, sessionState);
-
+                DataContractSerializer serializer = new DataContractSerializer(typeof(Dictionary<string, object>), _KnownTypesInternal);
+                serializer.WriteObject(sessionData, _sessionState);
                 // Get an output stream for the SessionState file and write the state asynchronously
-                StorageFile file = await ApplicationData.Current.LocalFolder.CreateFileAsync(SessionStateFilename, CreationCollisionOption.ReplaceExisting);
+                StorageFile file = await ApplicationData.Current.LocalFolder.CreateFileAsync(_SessionStateFilename, CreationCollisionOption.ReplaceExisting);
                 using (Stream fileStream = await file.OpenStreamForWriteAsync())
                 {
                     sessionData.Seek(0, SeekOrigin.Begin);
@@ -110,26 +143,24 @@ namespace Tracks.Common
         /// completes.</returns>
         public static async Task RestoreAsync()
         {
-            sessionState = new Dictionary<string, object>();
-
+            _sessionState = new Dictionary<string, object>();
             try
             {
                 // Get the input stream for the SessionState file
-                StorageFile file = await ApplicationData.Current.LocalFolder.GetFileAsync(SessionStateFilename);
+                StorageFile file = await ApplicationData.Current.LocalFolder.GetFileAsync(_SessionStateFilename);
                 using (IInputStream inStream = await file.OpenSequentialReadAsync())
                 {
                     // Deserialize the Session State
-                    DataContractSerializer serializer = new DataContractSerializer(typeof(Dictionary<string, object>), KnownTypesInternal);
-                    sessionState = (Dictionary<string, object>)serializer.ReadObject(inStream.AsStreamForRead());
+                    DataContractSerializer serializer = new DataContractSerializer(typeof(Dictionary<string, object>), _KnownTypesInternal);
+                    _sessionState = (Dictionary<string, object>)serializer.ReadObject(inStream.AsStreamForRead());
                 }
-
                 // Restore any registered frames to their saved state
-                foreach (var weakFrameReference in RegisteredFrames)
+                foreach (var weakFrameReference in _RegisteredFrames)
                 {
                     Frame frame;
                     if (weakFrameReference.TryGetTarget(out frame))
                     {
-                        frame.ClearValue(FrameSessionStateProperty);
+                        frame.ClearValue(_FrameSessionStateProperty);
                         RestoreFrameNavigationState(frame);
                     }
                 }
@@ -154,21 +185,18 @@ namespace Tracks.Common
         /// store navigation-related information.</param>
         public static void RegisterFrame(Frame frame, string sessionStateKey)
         {
-            if (frame.GetValue(FrameSessionStateKeyProperty) != null)
+            if (frame.GetValue(_FrameSessionStateKeyProperty) != null)
             {
                 throw new InvalidOperationException("Frames can only be registered to one session state key");
             }
-
-            if (frame.GetValue(FrameSessionStateProperty) != null)
+            if (frame.GetValue(_FrameSessionStateProperty) != null)
             {
                 throw new InvalidOperationException("Frames must be either be registered before accessing frame session state, or not registered at all");
             }
-
             // Use a dependency property to associate the session key with a frame, and keep a list of frames whose
             // navigation state should be managed
-            frame.SetValue(FrameSessionStateKeyProperty, sessionStateKey);
-            RegisteredFrames.Add(new WeakReference<Frame>(frame));
-
+            frame.SetValue(_FrameSessionStateKeyProperty, sessionStateKey);
+            _RegisteredFrames.Add(new WeakReference<Frame>(frame));
             // Check to see if navigation state can be restored
             RestoreFrameNavigationState(frame);
         }
@@ -184,8 +212,8 @@ namespace Tracks.Common
         {
             // Remove session state and remove the frame from the list of frames whose navigation
             // state will be saved (along with any weak references that are no longer reachable)
-            SessionState.Remove((string)frame.GetValue(FrameSessionStateKeyProperty));
-            RegisteredFrames.RemoveAll((weakFrameReference) =>
+            SessionState.Remove((string)frame.GetValue(_FrameSessionStateKeyProperty));
+            _RegisteredFrames.RemoveAll((weakFrameReference) =>
             {
                 Frame testFrame;
                 return !weakFrameReference.TryGetTarget(out testFrame) || testFrame == frame;
@@ -207,33 +235,32 @@ namespace Tracks.Common
         /// <see cref="SessionState"/>.</returns>
         public static Dictionary<string, object> SessionStateForFrame(Frame frame)
         {
-            var frameState = (Dictionary<string, object>)frame.GetValue(FrameSessionStateProperty);
-
+            var frameState = (Dictionary<string, object>)frame.GetValue(_FrameSessionStateProperty);
             if (frameState == null)
             {
-                var frameSessionKey = (string)frame.GetValue(FrameSessionStateKeyProperty);
+                var frameSessionKey = (string)frame.GetValue(_FrameSessionStateKeyProperty);
                 if (frameSessionKey != null)
                 {
                     // Registered frames reflect the corresponding session state
-                    if (!sessionState.ContainsKey(frameSessionKey))
+                    if (!_sessionState.ContainsKey(frameSessionKey))
                     {
-                        sessionState[frameSessionKey] = new Dictionary<string, object>();
+                        _sessionState[frameSessionKey] = new Dictionary<string, object>();
                     }
-
-                    frameState = (Dictionary<string, object>)sessionState[frameSessionKey];
+                    frameState = (Dictionary<string, object>)_sessionState[frameSessionKey];
                 }
                 else
                 {
                     // Frames that aren't registered have transient state
                     frameState = new Dictionary<string, object>();
                 }
-
-                frame.SetValue(FrameSessionStateProperty, frameState);
+                frame.SetValue(_FrameSessionStateProperty, frameState);
             }
-
             return frameState;
         }
 
+        /// <summary>
+        /// Restores the frame navigation state
+        /// </summary>
         private static void RestoreFrameNavigationState(Frame frame)
         {
             var frameState = SessionStateForFrame(frame);
@@ -243,6 +270,9 @@ namespace Tracks.Common
             }
         }
 
+        /// <summary>
+        /// Saves the rame navigation state
+        /// </summary>
         private static void SaveFrameNavigationState(Frame frame)
         {
             var frameState = SessionStateForFrame(frame);
@@ -250,14 +280,23 @@ namespace Tracks.Common
         }
     }
 
+    /// <summary>
+    /// Helper class for the suspension manager
+    /// </summary>
     internal class SuspensionManagerException : Exception
     {
+        /// <summary>
+        /// Constuctor for the Suspension Exception class
+        /// </summary>
         public SuspensionManagerException()
         {
         }
 
-        public SuspensionManagerException(Exception e)
-            : base("SuspensionManager failed", e)
+        /// <summary>
+        /// Constuctor for the Suspension Exception class
+        /// </summary>
+        /// <param name="e"></param>
+        public SuspensionManagerException(Exception e) : base("SuspensionManager failed", e)
         {
         }
     }

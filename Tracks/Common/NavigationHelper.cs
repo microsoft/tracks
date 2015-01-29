@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2015 Microsoft
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
+ */
+using System;
 using System.Collections.Generic;
 using Windows.System;
 using Windows.UI.Core;
@@ -67,10 +86,27 @@ namespace Tracks.Common
     [Windows.Foundation.Metadata.WebHostHidden]
     public class NavigationHelper : DependencyObject
     {
-        private readonly Page page;
-        private RelayCommand goBackCommand;
-        private RelayCommand goForwardCommand;
+        #region Private members
+        /// <summary>
+        /// Represents the current page.
+        /// </summary>
+        private readonly Page _page;
+
+        /// <summary>
+        /// Goes back to the previous item or page.
+        /// </summary>
+        private RelayCommand _goBackCommand;
+       
+        /// <summary>
+        /// Goes forward to the next item or page.
+        /// </summary>
+        private RelayCommand _goForwardCommand;
+
+        /// <summary>
+        /// Represents the index of the current page.
+        /// </summary>
         private string pageKey;
+        #endregion
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NavigationHelper"/> class.
@@ -82,32 +118,25 @@ namespace Tracks.Common
         /// </param>
         public NavigationHelper(Page page)
         {
-            this.page = page;
-
+            this._page = page;
             // When this page is part of the visual tree make two changes:
             // 1) Map application view state to visual state for the page
             // 2) Handle keyboard and mouse navigation requests
-            this.page.Loaded += (sender, e) =>
+            this._page.Loaded += (sender, e) =>
             {
                 // Keyboard and mouse navigation only apply when occupying the entire window
-                if (this.page.ActualHeight == Window.Current.Bounds.Height &&
-                    this.page.ActualWidth == Window.Current.Bounds.Width)
+                if (this._page.ActualHeight == Window.Current.Bounds.Height && this._page.ActualWidth == Window.Current.Bounds.Width)
                 {
                     // Listen to the window directly so focus isn't required
-                    Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated +=
-                        CoreDispatcher_AcceleratorKeyActivated;
-                    Window.Current.CoreWindow.PointerPressed +=
-                        this.CoreWindow_PointerPressed;
+                    Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated += CoreDispatcher_AcceleratorKeyActivated;
+                    Window.Current.CoreWindow.PointerPressed += this.CoreWindow_PointerPressed;
                 }
             };
-
             // Undo the same changes when the page is no longer visible
-            this.page.Unloaded += (sender, e) =>
+            this._page.Unloaded += (sender, e) =>
             {
-                Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated -=
-                    CoreDispatcher_AcceleratorKeyActivated;
-                Window.Current.CoreWindow.PointerPressed -=
-                    this.CoreWindow_PointerPressed;
+                Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated -= CoreDispatcher_AcceleratorKeyActivated;
+                Window.Current.CoreWindow.PointerPressed -= this.CoreWindow_PointerPressed;
             };
         }
 
@@ -139,19 +168,17 @@ namespace Tracks.Common
         {
             get
             {
-                if (this.goBackCommand == null)
+                if (this._goBackCommand == null)
                 {
-                    this.goBackCommand = new RelayCommand(
+                    this._goBackCommand = new RelayCommand(
                         () => this.GoBack(),
                         () => this.CanGoBack());
                 }
-
-                return this.goBackCommand;
+                return this._goBackCommand;
             }
-
             set
             {
-                this.goBackCommand = value;
+                this._goBackCommand = value;
             }
         }
 
@@ -167,20 +194,22 @@ namespace Tracks.Common
         {
             get
             {
-                if (this.goForwardCommand == null)
+                if (this._goForwardCommand == null)
                 {
-                    this.goForwardCommand = new RelayCommand(
+                    this._goForwardCommand = new RelayCommand(
                         () => this.GoForward(),
                         () => this.CanGoForward());
                 }
-
-                return this.goForwardCommand;
+                return this._goForwardCommand;
             }
         }
 
+        /// <summary>
+        /// Gets the frame of the current page
+        /// </summary>
         private Frame Frame
         {
-            get { return this.page.Frame; }
+            get { return this._page.Frame; }
         }
 
         /// <summary>
@@ -244,7 +273,6 @@ namespace Tracks.Common
         {
             var frameState = SuspensionManager.SessionStateForFrame(this.Frame);
             this.pageKey = "Page-" + this.Frame.BackStackDepth;
-
             if (e.NavigationMode == NavigationMode.New)
             {
                 // Clear existing state for forward navigation when adding a new page to the
@@ -256,7 +284,6 @@ namespace Tracks.Common
                     nextPageIndex++;
                     nextPageKey = "Page-" + nextPageIndex;
                 }
-
                 // Pass the navigation parameter to the new page
                 if (this.LoadState != null)
                 {
@@ -280,6 +307,7 @@ namespace Tracks.Common
         /// This method calls <see cref="SaveState"/>, where all page specific
         /// navigation and process lifetime management logic should be placed.
         /// </summary>
+        /// <param name="e">Event data that describes how this page was left.</param>
         public void OnNavigatedFrom(NavigationEventArgs e)
         {
             var frameState = SuspensionManager.SessionStateForFrame(this.Frame);
@@ -288,7 +316,6 @@ namespace Tracks.Common
             {
                 this.SaveState(this, new SaveStateEventArgs(pageState));
             }
-
             frameState[this.pageKey] = pageState;
         }
 
@@ -302,7 +329,6 @@ namespace Tracks.Common
         private void CoreDispatcher_AcceleratorKeyActivated(CoreDispatcher sender, AcceleratorKeyEventArgs e)
         {
             var virtualKey = e.VirtualKey;
-
             // Only investigate further when Left, Right, or the dedicated Previous or Next keys
             // are pressed
             if ((e.EventType == CoreAcceleratorKeyEventType.SystemKeyDown ||
@@ -317,16 +343,13 @@ namespace Tracks.Common
                 bool shiftKey = (coreWindow.GetKeyState(VirtualKey.Shift) & downState) == downState;
                 bool noModifiers = !menuKey && !controlKey && !shiftKey;
                 bool onlyAlt = menuKey && !controlKey && !shiftKey;
-
-                if (((int)virtualKey == 166 && noModifiers) ||
-                    (virtualKey == VirtualKey.Left && onlyAlt))
+                if (((int)virtualKey == 166 && noModifiers) || (virtualKey == VirtualKey.Left && onlyAlt))
                 {
                     // When the previous key or Alt+Left are pressed navigate back
                     e.Handled = true;
                     this.GoBackCommand.Execute(null);
                 }
-                else if (((int)virtualKey == 167 && noModifiers) ||
-                    (virtualKey == VirtualKey.Right && onlyAlt))
+                else if (((int)virtualKey == 167 && noModifiers) || (virtualKey == VirtualKey.Right && onlyAlt))
                 {
                     // When the next key or Alt+Right are pressed navigate forward
                     e.Handled = true;
@@ -345,15 +368,11 @@ namespace Tracks.Common
         private void CoreWindow_PointerPressed(CoreWindow sender, PointerEventArgs e)
         {
             var properties = e.CurrentPoint.Properties;
-
             // Ignore button chords with the left, right, and middle buttons
-            if (properties.IsLeftButtonPressed
-                || properties.IsRightButtonPressed
-                || properties.IsMiddleButtonPressed)
+            if (properties.IsLeftButtonPressed || properties.IsRightButtonPressed || properties.IsMiddleButtonPressed)
             {
                 return;
             }
-
             // If back or foward are pressed (but not both) navigate appropriately
             bool backPressed = properties.IsXButton1Pressed;
             bool forwardPressed = properties.IsXButton2Pressed;
@@ -364,7 +383,6 @@ namespace Tracks.Common
                 {
                     this.GoBackCommand.Execute(null);
                 }
-
                 if (forwardPressed)
                 {
                     this.GoForwardCommand.Execute(null);
@@ -389,8 +407,7 @@ namespace Tracks.Common
         /// A dictionary of state preserved by this page during an earlier
         /// session. This will be null the first time a page is visited.
         /// </param>
-        public LoadStateEventArgs(object navigationParameter, Dictionary<string, object> pageState)
-            : base()
+        public LoadStateEventArgs(object navigationParameter, Dictionary<string, object> pageState) : base()
         {
             this.NavigationParameter = navigationParameter;
             this.PageState = pageState;
@@ -418,8 +435,7 @@ namespace Tracks.Common
         /// Initializes a new instance of the <see cref="SaveStateEventArgs"/> class.
         /// </summary>
         /// <param name="pageState">An empty dictionary to be populated with serializable state.</param>
-        public SaveStateEventArgs(Dictionary<string, object> pageState)
-            : base()
+        public SaveStateEventArgs(Dictionary<string, object> pageState) : base()
         {
             this.PageState = pageState;
         }

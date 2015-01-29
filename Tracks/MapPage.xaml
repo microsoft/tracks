@@ -12,32 +12,24 @@
         <CollectionViewSource x:Name="listSource"/>
         <CollectionViewSource x:Name="filterSource"/>
     </Page.Resources>
-
     <Grid x:Name="LayoutRoot">
         <Grid.ChildrenTransitions>
             <TransitionCollection>
                 <EntranceThemeTransition/>
             </TransitionCollection>
         </Grid.ChildrenTransitions>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
         <!-- TitlePanel -->
         <StackPanel x:Name="TopPanel" Grid.Row="0" Margin="24,17,0,28">
             <TextBlock x:Uid="Application" Text="" Style="{ThemeResource TitleTextBlockStyle}" Typography.Capitals="SmallCaps" Foreground="Black"/>
             <TextBlock Text="tracks" Margin="0,12,0,0" Style="{ThemeResource HeaderTextBlockStyle}" Foreground="Black"/>
         </StackPanel>
-
-        <!--TODO: Content should be placed within the following grid-->
         <Grid Grid.Row="1" x:Name="ContentRoot">
-            <maps:MapControl x:Name="TracksMap" Margin="0,0,0,0" 
-                            MapTapped="OnTapped" />
-            <TextBlock x:Name="FilterTime" 
-                       FontSize="24" TextAlignment="Right" Width="480" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="#7F000000" Margin="5,5"/>
-
+            <maps:MapControl x:Name="TracksMap" Margin="0,0,0,0" MapTapped="OnTapped" />
+            <TextBlock x:Name="FilterTime" FontSize="24" TextAlignment="Right" Width="480" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="#7F000000" Margin="5,5"/>
             <SymbolIcon x:Name="FullScreeButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,15,15" Symbol="FullScreen" Tapped="FullScreeButton_OnTapped" RenderTransformOrigin="0.5,0.5">
                 <SymbolIcon.RenderTransform>
                     <CompositeTransform ScaleX="2" ScaleY="2"/>
@@ -47,15 +39,15 @@
     </Grid>
     <Page.BottomAppBar>
         <CommandBar x:Name="CmdBar" Background="#F0A30A" Foreground="Black">
-            <AppBarButton x:Uid="SelectButton" x:Name="SelectButton" Label="select">
-                <AppBarButton.Icon>
-                    <BitmapIcon UriSource="/Assets/calendar-icon.png"/>
-                </AppBarButton.Icon>
+            <AppBarButton x:Uid="SelectButton" x:Name="SelectButton" Label="select day">
                 <AppBarButton.Flyout>
                     <ListPickerFlyout x:Name="DateFlyout" ItemsSource="{Binding Source={StaticResource listSource}}" ItemsPicked="OnPicked"/>
                 </AppBarButton.Flyout>
+                <AppBarButton.Icon>
+                    <BitmapIcon UriSource="/Assets/calendar-icon.png"/>
+                </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Uid="FilterButton" x:Name="FilterButton" Label="filter">
+            <AppBarButton x:Uid="FilterButton" x:Name="FilterButton" Label="duration">
                 <AppBarButton.Icon>
                     <BitmapIcon UriSource="/Assets/clock-icon.png"/>
                 </AppBarButton.Icon>

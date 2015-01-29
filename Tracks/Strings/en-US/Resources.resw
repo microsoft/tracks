@@ -131,7 +131,7 @@
   </data>
   <data name="AboutPage_ProjectRun_Text" xml:space="preserve">
     <value>{0}</value>
-    <comment>{0} is a link to the Nokia Developer website</comment>
+    <comment>{0} is a link to the Microsoft Developer website</comment>
   </data>
   <data name="AboutPage_VersionText" xml:space="preserve">
     <value>Tracks version {0}</value>

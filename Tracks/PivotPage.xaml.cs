@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2015 Microsoft
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
+ */
+using System;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -9,23 +28,33 @@ using Tracks.Common;
 using Tracks.Utilities;
 using Lumia.Sense;
 
-// The Pivot Application template is documented at http://go.microsoft.com/fwlink/?LinkID=391641
-
+/// <summary>
+/// The Pivot Application template is documented at http://go.microsoft.com/fwlink/?LinkID=391641
+/// </summary>
 namespace Tracks
 {
+    /// <summary>
+    /// This page will display additional information for a tapped point on the map
+    /// </summary>
     public sealed partial class PivotPage : Page
     {
-        private readonly NavigationHelper navigationHelper;
+        #region Private members
+        /// <summary>
+        /// Navigation helper used to navigate through pages
+        /// </summary>
+        private readonly NavigationHelper _navigationHelper;
+        #endregion
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public PivotPage()
         {
             this.InitializeComponent();
-
             this.NavigationCacheMode = NavigationCacheMode.Required;
-
-            this.navigationHelper = new NavigationHelper(this);
-            this.navigationHelper.LoadState += this.NavigationHelper_LoadState;
-            this.navigationHelper.SaveState += this.NavigationHelper_SaveState;
+            this._navigationHelper = new NavigationHelper(this);
+            this._navigationHelper.LoadState += this.NavigationHelper_LoadState;
+            this._navigationHelper.SaveState += this.NavigationHelper_SaveState;
         }
 
         /// <summary>
@@ -33,7 +62,7 @@ namespace Tracks
         /// </summary>
         public NavigationHelper NavigationHelper
         {
-            get { return this.navigationHelper; }
+            get { return this._navigationHelper; }
         }
 
         /// <summary>
@@ -52,54 +81,50 @@ namespace Tracks
             if (e.NavigationParameter != null)
             {
                 var icon = e.NavigationParameter as MapIcon;
-
                 if (icon != null)
                 {
                     CreatePivotItem(MapExtensions.GetValue(icon));
                 }
             }
-
         }
 
         /// <summary>
         /// Create a Pivot and PivotItem, and fill with tPoint info
         /// </summary>
-        /// <param name="tPoint"></param>
+        /// <param name="tPoint">TrackPoint for which additional data will be displayed.</param>
         private void CreatePivotItem(TrackPoint tPoint)
         {
             MainGrid.Children.Clear();
             var pivot = new Pivot { Title = "SENSORCORE SAMPLE", Margin = new Thickness(0, 12, 0, 0), Foreground = new SolidColorBrush(Colors.Black) };
-
             var item = new PivotItem { Header = "Routepoint", Foreground = new SolidColorBrush(Colors.Black) };
-
             var stack = new StackPanel();
             stack.Children.Add(CreateTextBlock("Latitude:", tPoint.Position.Latitude.ToString()));
             stack.Children.Add(CreateTextBlock("Longitude:", tPoint.Position.Longitude.ToString()));
             stack.Children.Add(CreateTextBlock("Duration:", tPoint.LengthOfStay.TotalMinutes.ToString() + " min"));
             stack.Children.Add(CreateTextBlock("Radius:", tPoint.Radius.ToString() + " m"));
             stack.Children.Add(CreateTextBlock("Timestamp:", tPoint.Timestamp.DateTime.ToString() + " m"));
-            
             item.Content = stack;
             pivot.Items.Add(item);
-
             MainGrid.Children.Add(pivot);
         }
 
         /// <summary>
         /// Helper method to create a TextBlock to be used in the PivotItem
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="value"></param>
+        /// <param name="text">Label of the text block.</param>
+        /// <param name="value">Value to be shown in the text block.</param>
         /// <returns></returns>
         private static TextBlock CreateTextBlock(string text, string value)
         {
             return new TextBlock
             {
                 FontFamily = new FontFamily("Segoe UI"),
-                FontSize = 32,
+                FontSize = 24,
+                TextWrapping = Windows.UI.Xaml.TextWrapping.Wrap,
                 Text = text + " " + value
             };
         }
+
         /// <summary>
         /// Preserves state associated with this page in case the application is suspended or the
         /// page is discarded from the navigation cache. Values must conform to the serialization
@@ -110,34 +135,26 @@ namespace Tracks
         /// serializable state.</param>
         private void NavigationHelper_SaveState(object sender, SaveStateEventArgs e)
         {
-            // TODO: Save the unique state of the page here.
         }
 
         #region NavigationHelper registration
-
         /// <summary>
-        /// The methods provided in this section are simply used to allow
-        /// NavigationHelper to respond to the page's navigation methods.
-        /// <para>
-        /// Page specific logic should be placed in event handlers for the  
-        /// <see cref="NavigationHelper.LoadState"/>
-        /// and <see cref="NavigationHelper.SaveState"/>.
-        /// The navigation parameter is available in the LoadState method 
-        /// in addition to page state preserved during an earlier session.
-        /// </para>
+        /// Called when a page becomes the active page in a frame.
         /// </summary>
-        /// <param name="e">Provides data for navigation methods and event
-        /// handlers that cannot cancel the navigation request.</param>
+        /// <param name="e">Provides data for non-cancelable navigation events</param>
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            this.navigationHelper.OnNavigatedTo(e);
+            this._navigationHelper.OnNavigatedTo(e);
         }
 
+        /// <summary>
+        /// Called when a page is no longer the active page in a frame.
+        /// </summary>
+        /// <param name="e">Provides data for non-cancelable navigation events</param>
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            this.navigationHelper.OnNavigatedFrom(e);
+            this._navigationHelper.OnNavigatedFrom(e);
         }
-
         #endregion
     }
 }

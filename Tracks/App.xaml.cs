@@ -1,4 +1,23 @@
-﻿using Tracks.Common;
+﻿/*
+ * Copyright (c) 2015 Microsoft
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
+ */
+using Tracks.Common;
 using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -8,8 +27,9 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
 
-// The Pivot Application template is documented at http://go.microsoft.com/fwlink/?LinkID=391641
-
+/// <summary>
+/// The Pivot Application template is documented at http://go.microsoft.com/fwlink/?LinkID=391641 
+/// </summary>
 namespace Tracks
 {
     /// <summary>
@@ -17,7 +37,12 @@ namespace Tracks
     /// </summary>
     public sealed partial class App : Application
     {
-        private TransitionCollection transitions;
+        #region Private members
+        /// <summary>
+        /// Collection of transitions; each transition represents a different theme transition
+        /// </summary>
+        private TransitionCollection _transitions;
+        #endregion
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -51,22 +76,16 @@ namespace Tracks
                 this.DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
-
             Frame rootFrame = Window.Current.Content as Frame;
-
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active.
             if (rootFrame == null)
             {
                 // Create a Frame to act as the navigation context and navigate to the first page.
                 rootFrame = new Frame();
-
                 // Associate the frame with a SuspensionManager key.
                 SuspensionManager.RegisterFrame(rootFrame, "AppFrame");
-
-                // TODO: Change this value to a cache size that is appropriate for your application.
                 rootFrame.CacheSize = 1;
-
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {
                     // Restore the saved session state only when appropriate.
@@ -80,26 +99,22 @@ namespace Tracks
                         // Assume there is no state and continue.
                     }
                 }
-
                 // Place the frame in the current Window.
                 Window.Current.Content = rootFrame;
             }
-
             if (rootFrame.Content == null)
             {
                 // Removes the turnstile navigation for startup.
                 if (rootFrame.ContentTransitions != null)
                 {
-                    this.transitions = new TransitionCollection();
+                    this._transitions = new TransitionCollection();
                     foreach (var c in rootFrame.ContentTransitions)
                     {
-                        this.transitions.Add(c);
+                        this._transitions.Add(c);
                     }
                 }
-
                 rootFrame.ContentTransitions = null;
                 rootFrame.Navigated += this.RootFrame_FirstNavigated;
-
                 // When the navigation stack isn't restored navigate to the first page,
                 // configuring the new page by passing required information as a navigation
                 // parameter.
@@ -108,7 +123,6 @@ namespace Tracks
                     throw new Exception("Failed to create initial page");
                 }
             }
-
             // Ensure the current window is active.
             Window.Current.Activate();
         }
@@ -119,7 +133,7 @@ namespace Tracks
         private void RootFrame_FirstNavigated(object sender, NavigationEventArgs e)
         {
             var rootFrame = sender as Frame;
-            rootFrame.ContentTransitions = this.transitions ?? new TransitionCollection() { new NavigationThemeTransition() };
+            rootFrame.ContentTransitions = this._transitions ?? new TransitionCollection() { new NavigationThemeTransition() };
             rootFrame.Navigated -= this.RootFrame_FirstNavigated;
         }
 
@@ -135,13 +149,11 @@ namespace Tracks
             {
                 return;
             }
-
             var handler = this.BackPressed;
             if (handler != null)
             {
                 handler(sender, e);
             }
-
             if (frame.CanGoBack && !e.Handled)
             {
                 frame.GoBack();
