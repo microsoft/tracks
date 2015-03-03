@@ -1,4 +1,5 @@
 ﻿/*
+ * The MIT License (MIT)
  * Copyright (c) 2015 Microsoft
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the "Software"), to deal
@@ -80,10 +81,10 @@ namespace Tracks
         {
             if (e.NavigationParameter != null)
             {
-                var icon = e.NavigationParameter as MapIcon;
+                var icon = e.NavigationParameter.ToString();
                 if (icon != null)
                 {
-                    CreatePivotItem(MapExtensions.GetValue(icon));
+                    CreatePivotItem( icon );
                 }
             }
         }
@@ -92,17 +93,19 @@ namespace Tracks
         /// Create a Pivot and PivotItem, and fill with tPoint info
         /// </summary>
         /// <param name="tPoint">TrackPoint for which additional data will be displayed.</param>
-        private void CreatePivotItem(TrackPoint tPoint)
+        private void CreatePivotItem(string tPoint)
         {
             MainGrid.Children.Clear();
+            string[] split = tPoint.Split(new Char[] { '\n'});
             var pivot = new Pivot { Title = "SENSORCORE SAMPLE", Margin = new Thickness(0, 12, 0, 0), Foreground = new SolidColorBrush(Colors.Black) };
             var item = new PivotItem { Header = "Routepoint", Foreground = new SolidColorBrush(Colors.Black) };
             var stack = new StackPanel();
-            stack.Children.Add(CreateTextBlock("Latitude:", tPoint.Position.Latitude.ToString()));
-            stack.Children.Add(CreateTextBlock("Longitude:", tPoint.Position.Longitude.ToString()));
-            stack.Children.Add(CreateTextBlock("Duration:", tPoint.LengthOfStay.TotalMinutes.ToString() + " min"));
-            stack.Children.Add(CreateTextBlock("Radius:", tPoint.Radius.ToString() + " m"));
-            stack.Children.Add(CreateTextBlock("Timestamp:", tPoint.Timestamp.DateTime.ToString() + " m"));
+            stack.Children.Add(CreateTextBlock("Latitude:", split[0].ToString()));
+            stack.Children.Add(CreateTextBlock("Longitude:", split[1].ToString()));
+            stack.Children.Add(CreateTextBlock("Length of stay:", split[2].ToString() + " min"));
+            stack.Children.Add(CreateTextBlock("Radius:", split[3].ToString() + " m"));
+            stack.Children.Add(CreateTextBlock("Timestamp:", split[4].ToString()));
+            stack.Children.Add(CreateTextBlock("Activities:", split[5].ToString()));
             item.Content = stack;
             pivot.Items.Add(item);
             MainGrid.Children.Add(pivot);

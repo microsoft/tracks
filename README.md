@@ -60,7 +60,7 @@ file the capabilities required for it to work:
 
 3. Version history
 --------------------------------------------------------------------------------
-
+* Version 1.2.1.3: Updated to use latest Lumia SensorCore SDK 1.1 Preview
 * Version 1.2.1.1: Some bug fixes made in this release
 * Version 1.2.1: Bug fixes
 * Version 1.2:
@@ -76,6 +76,7 @@ file the capabilities required for it to work:
 
 | Project | Release | Download |
 | ------- | --------| -------- |
+| Tracks | v1.2.1.3 | [tracks-1.2.1.3.zip](https://github.com/microsoft/tracks/archive/v1.2.1.3.zip) |
 | Tracks | v1.2.1.1 | [tracks-1.2.1.1.zip](https://github.com/microsoft/tracks/archive/v1.2.1.1.zip) |
 | Tracks | v1.2.1 | [tracks-1.2.zip](https://github.com/microsoft/tracks/archive/v1.2.zip) |
 | Tracks | v1.0 | [tracks-1.0.zip](https://github.com/microsoft/tracks/archive/v1.0.zip) |

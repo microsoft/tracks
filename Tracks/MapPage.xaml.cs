@@ -1,4 +1,5 @@
 ﻿/*
+ * The MIT License (MIT)
  * Copyright (c) 2015 Microsoft
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,17 +20,15 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Windows.ApplicationModel.Resources;
 using Windows.Globalization;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using Tracks.Common;
 using Tracks.Utilities;
-using Tracker = Lumia.Sense.TrackPointMonitor;
+using Windows.Devices.Geolocation;
 
 /// <summary>
 /// The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
@@ -75,7 +74,17 @@ namespace Tracks
         /// <summary>
         /// Defines how small duration is shown
         /// </summary>
-        private int _filterTime = 0;
+        private string _filterTime = "all";
+
+        /// <summary>
+        /// Curent location index
+        /// </summary>
+        int locationIndex = 0;
+
+        /// <summary>
+        /// Map Page instance
+        /// </summary>
+        public static MapPage _instanceMap;
         #endregion
 
         /// <summary>
@@ -84,6 +93,8 @@ namespace Tracks
         public MapPage()
         {
             this.InitializeComponent();
+            if (_instanceMap == null)
+                _instanceMap = this;
             this._navigationHelper = new NavigationHelper(this);
             this._navigationHelper.LoadState += this.NavigationHelper_LoadState;
             this._navigationHelper.SaveState += this.NavigationHelper_SaveState;
@@ -93,17 +104,24 @@ namespace Tracks
             this.filterSource.Source = _filterList;
             TracksMap.MapServiceToken = "xxx";
             if(_selected == null)
-                _selected = _optionList[0];            
-            this.Loaded += async (sender, args) =>
+                _selected = _optionList[0];
+            InitCore();
+            // Activate and deactivate the SensorCore when the visibility of the app changes
+            Window.Current.VisibilityChanged += async (oo, ee) =>
             {
-                await InitCore();
-                // This is not implemented by the simulator, uncomment for the RouteTracker
-                if (await Tracker.IsSupportedAsync())
+                if (_tracker != null)
                 {
-                    DrawRoute();
+                    if (!ee.Visible)
+                    {
+                        await CallSensorcoreApiAsync(async () => { await _tracker.DeactivateAsync(); });
+                        await CallSensorcoreApiAsync(async () => { await _placeMonitor.DeactivateAsync(); });
+                    }
+                    else
+                    {
+                        await CallSensorcoreApiAsync(async () => { await _tracker.ActivateAsync(); });
+                        await CallSensorcoreApiAsync(async () => { await _placeMonitor.ActivateAsync(); });
+                    }
                 }
-                DateFlyout.SelectedIndex = 0;
-                FilterTime.Text = _selected != null ? _selected.Name : _loader.GetString("NoTimespanSelected/Text");
             };
         }
 
@@ -151,12 +169,13 @@ namespace Tracks
         /// </summary>
         private void FillFilterList()
         {
-            var minutes = _loader.GetString("Minutes");
-            _filterList.Add("10 " + minutes);
+            var minutes = _loader.GetString("minutes");
+            _filterList.Add("0 - 10 " + minutes);
             _filterList.Add("15 " + minutes);
             _filterList.Add("30 " + minutes);
             _filterList.Add("60 " + minutes);
-            _filterList.Add(_loader.GetString("All"));
+            _filterList.Add(_loader.GetString("all"));
+            _filterTime = "all";
         }
 
         /// <summary>
@@ -222,59 +241,34 @@ namespace Tracks
             this._navigationHelper.OnNavigatedFrom(e);
         }
 
-        /// <summary>
-        /// Navigates to details page for the selected point
-        /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="args">Parameter that contains the event data.</param>
-        private void OnTapped(MapControl sender, MapInputEventArgs args)
-        {
-            try
-            {
-                var elementList = TracksMap.FindMapElementsAtOffset(args.Position);
-                foreach (var element in elementList)
-                {
-                    var icon = element as MapIcon;
-                    if (icon != null)
-                    {
-                        this.Frame.Navigate(typeof(PivotPage), icon);
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-        }
         #endregion
 
         /// <summary>
-        /// Filters time and draws the tracks from the selected time interval.
+        /// 
         /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="e">Parameter that contains the event data.</param>
-        private void OnFiltered(ListPickerFlyout sender, ItemsPickedEventArgs e)
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void OnFiltered(ListPickerFlyout sender, ItemsPickedEventArgs e)
         {
             switch (FilterFlyout.SelectedIndex)
             {
                 case 0:
-                    _filterTime = 10;
+                    _filterTime = "0 - 10 minutes";
                     break;
                 case 1:
-                    _filterTime = 15;
+                    _filterTime = "15 minutes";
                     break;
                 case 2:
-                    _filterTime = 30;
+                    _filterTime = "30 minutes";
                     break;
                 case 3:
-                    _filterTime = 60;
+                    _filterTime = "60 minutes";
                     break;
                 default:
-                    _filterTime = 0;
+                    _filterTime = "0 minutes";
                     break;
             }
-            DrawRoute();
+            await DrawRoute();
         }
 
         /// <summary>
@@ -292,12 +286,12 @@ namespace Tracks
         /// </summary>
         /// <param name="sender">The control that the action is for.</param>
         /// <param name="args">Parameter that contains the event data.</param>
-        private void OnPicked(ListPickerFlyout sender, ItemsPickedEventArgs args)
+        private async void OnPicked(ListPickerFlyout sender, ItemsPickedEventArgs args)
         {
             if (args.AddedItems.Count == 1)
             {
                 _selected = (DaySelectionItem)args.AddedItems[0];
-                DrawRoute();
+                await DrawRoute();
                 FilterTime.Text = _selected.Name;
             }
             else
@@ -323,6 +317,73 @@ namespace Tracks
                 CmdBar.Visibility = Visibility.Visible;
                 TopPanel.Visibility = Visibility.Visible;
                 FullScreeButton.Symbol = Symbol.FullScreen;
+            }
+        }
+
+        /// <summary>
+        /// Go to Previous point
+        /// </summary>
+        /// <param name="sender">The control that the action is for.</param>
+        /// <param name="e">Parameter that contains the event data.</param>
+        private void GoToPreviousLocation(object sender, RoutedEventArgs e)
+        {
+            locationIndex--;
+            if (locationIndex >= 0)
+                TracksMap.Center = new Geopoint(points[locationIndex].Position);
+            else
+                locationIndex = 0;
+        }
+        
+        /// <summary>
+        /// Go to Previous point
+        /// </summary>
+        /// <param name="sender">The control that the action is for.</param>
+        /// <param name="e">Parameter that contains the event data.</param>
+        private void GoToNextLocation(object sender, RoutedEventArgs e)
+        {
+            locationIndex++;
+            if (locationIndex < points.Count)
+                TracksMap.Center = new Geopoint(points[locationIndex].Position);
+            else
+                locationIndex = points.Count - 1;
+        }
+
+        /// <summary>
+        /// Draws the route for all the tracks in the selected day.
+        /// </summary>
+        /// <param name="sender">The control that the action is for.</param>
+        /// <param name="args">Parameter that contains the event data.</param>
+        private async void flyoutItem_Click(object sender, RoutedEventArgs e)
+        {
+            var flyoutItem = e.OriginalSource as MenuFlyoutItem;
+            try
+            {
+                for (int i = 0; i < listSource.View.Count; i++)
+                    if (flyoutItem.Text.Contains(listSource.View[i].ToString()))
+                        _selected = (DaySelectionItem)listSource.View[i];
+                 await DrawRoute();
+                FilterTime.Text = _selected.Name;
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Filters time and draws the tracks from the selected time interval.
+        /// </summary>
+        /// <param name="sender">The control that the action is for.</param>
+        /// <param name="e">Parameter that contains the event data.</param>
+        private async void FilterItem_Click(object sender, RoutedEventArgs e)
+        {
+            var flyoutItem = e.OriginalSource as MenuFlyoutItem;
+            try
+            {
+                _filterTime = flyoutItem.Text;
+               await DrawRoute();
+            }
+            catch (Exception)
+            {
             }
         }
     }

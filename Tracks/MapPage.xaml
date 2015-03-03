@@ -28,7 +28,7 @@
             <TextBlock Text="tracks" Margin="0,12,0,0" Style="{ThemeResource HeaderTextBlockStyle}" Foreground="Black"/>
         </StackPanel>
         <Grid Grid.Row="1" x:Name="ContentRoot">
-            <maps:MapControl x:Name="TracksMap" Margin="0,0,0,0" MapTapped="OnTapped" />
+            <maps:MapControl x:Name="TracksMap" Margin="0,0,0,0" />
             <TextBlock x:Name="FilterTime" FontSize="24" TextAlignment="Right" Width="480" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="#7F000000" Margin="5,5"/>
             <SymbolIcon x:Name="FullScreeButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,15,15" Symbol="FullScreen" Tapped="FullScreeButton_OnTapped" RenderTransformOrigin="0.5,0.5">
                 <SymbolIcon.RenderTransform>
@@ -39,21 +39,25 @@
     </Grid>
     <Page.BottomAppBar>
         <CommandBar x:Name="CmdBar" Background="#F0A30A" Foreground="Black">
-            <AppBarButton x:Uid="SelectButton" x:Name="SelectButton" Label="select day">
+            <AppBarButton x:Uid="SelectButton" x:Name="SelectButton" Icon="Calendar" Label="day filter">
                 <AppBarButton.Flyout>
                     <ListPickerFlyout x:Name="DateFlyout" ItemsSource="{Binding Source={StaticResource listSource}}" ItemsPicked="OnPicked"/>
                 </AppBarButton.Flyout>
-                <AppBarButton.Icon>
-                    <BitmapIcon UriSource="/Assets/calendar-icon.png"/>
-                </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Uid="FilterButton" x:Name="FilterButton" Label="duration">
-                <AppBarButton.Icon>
-                    <BitmapIcon UriSource="/Assets/clock-icon.png"/>
-                </AppBarButton.Icon>
+            <AppBarButton x:Uid="FilterButton" x:Name="FilterButton" Icon="Clock" Label="time filter">
                 <AppBarButton.Flyout>
                     <ListPickerFlyout x:Name="FilterFlyout" ItemsSource="{Binding Source={StaticResource filterSource}}" ItemsPicked="OnFiltered"/>
                 </AppBarButton.Flyout>
+            </AppBarButton>
+            <AppBarButton x:Uid="PreviousButton" x:Name="PreviousButton" Label="previous routepoint" Click="GoToPreviousLocation">
+                <AppBarButton.Icon>
+                    <BitmapIcon UriSource="/Assets/previous.png"/>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Uid="NextButton" x:Name="NextButton" Label="next routepoint" Click="GoToNextLocation">
+                <AppBarButton.Icon>
+                    <BitmapIcon UriSource="/Assets/next.png"/>
+                </AppBarButton.Icon>
             </AppBarButton>
             <CommandBar.SecondaryCommands>
                 <AppBarButton x:Uid="AboutButton" x:Name="AboutButton" Label="" Click="OnAboutClicked"/>

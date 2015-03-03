@@ -78,6 +78,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="PushPin.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AboutPage.xaml.cs">
@@ -100,8 +104,10 @@
       <DependentUpon>PivotPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PushPin.xaml.cs">
+      <DependentUpon>PushPin.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utilities\DaySelectionItem.cs" />
-    <Compile Include="Utilities\MapExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -114,6 +120,8 @@
     <Content Include="Assets\dot.png" />
     <Content Include="Assets\dotSmall.png" />
     <Content Include="Assets\Logo.scale-240.png" />
+    <Content Include="Assets\next.png" />
+    <Content Include="Assets\previous.png" />
     <Content Include="Assets\SmallLogo.scale-240.png" />
     <Content Include="Assets\SplashScreen.scale-240.png" />
     <Content Include="Assets\Square71x71Logo.scale-240.png" />
@@ -141,13 +149,7 @@
     <None Include="Help\LumiaSensorCoreSDK.chm" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Lumia.Sense, Version=255.255.255.255, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\LumiaSensorCoreSDK.1.0.3.263\lib\portable-wpa81+wp81\x86\Lumia.Sense.winmd</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
+ 
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">
     <VisualStudioVersion>12.0</VisualStudioVersion>
   </PropertyGroup>
@@ -182,12 +184,5 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\$(TargetPlatformVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Import Project="..\packages\LumiaSensorCoreSDK.1.0.3.263\build\wpa81\LumiaSensorCoreSDK.targets" Condition="Exists('..\packages\LumiaSensorCoreSDK.1.0.3.263\build\wpa81\LumiaSensorCoreSDK.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+ 
 </Project>
