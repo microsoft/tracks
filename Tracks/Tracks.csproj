@@ -107,6 +107,7 @@
     <Compile Include="PushPin.xaml.cs">
       <DependentUpon>PushPin.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Utilities\ActivityReader.cs" />
     <Compile Include="Utilities\DaySelectionItem.cs" />
   </ItemGroup>
   <ItemGroup>
