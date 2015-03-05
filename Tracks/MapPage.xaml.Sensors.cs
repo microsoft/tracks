@@ -142,7 +142,15 @@ namespace Tracks
                 } ) )
                 {
                     await ActivityReader.Instance().Initialize();
-                    await DrawRoute();
+                    await _sync.WaitAsync();
+                    try
+                    {
+                        await DrawRoute();
+                    }
+                    finally
+                    {
+                        _sync.Release();
+                    }
                     FilterTime.Text = _selected != null ? _selected.Name : _loader.GetString( "NoTimespanSelected/Text" );
                 }
             }

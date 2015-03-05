@@ -29,6 +29,7 @@ using Windows.UI.Xaml.Navigation;
 using Tracks.Common;
 using Tracks.Utilities;
 using Windows.Devices.Geolocation;
+using System.Threading;
 
 /// <summary>
 /// The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
@@ -85,6 +86,11 @@ namespace Tracks
         /// Map Page instance
         /// </summary>
         public static MapPage _instanceMap;
+
+        /// <summary>
+        /// Synchronization object
+        /// </summary>
+        private SemaphoreSlim _sync = new SemaphoreSlim( 1 );
         #endregion
 
         /// <summary>
@@ -265,10 +271,18 @@ namespace Tracks
                     _filterTime = "60 minutes";
                     break;
                 default:
-                    _filterTime = "0 minutes";
+                    _filterTime = "all";
                     break;
             }
-            await DrawRoute();
+            await _sync.WaitAsync();
+            try
+            {
+                await DrawRoute();
+            }
+            finally
+            {
+                _sync.Release();
+            }
         }
 
         /// <summary>
@@ -291,7 +305,15 @@ namespace Tracks
             if (args.AddedItems.Count == 1)
             {
                 _selected = (DaySelectionItem)args.AddedItems[0];
-                await DrawRoute();
+                await _sync.WaitAsync();
+                try
+                {
+                    await DrawRoute();
+                }
+                finally
+                {
+                    _sync.Release();
+                }
                 FilterTime.Text = _selected.Name;
             }
             else
@@ -346,45 +368,6 @@ namespace Tracks
                 TracksMap.Center = new Geopoint(points[locationIndex].Position);
             else
                 locationIndex = points.Count - 1;
-        }
-
-        /// <summary>
-        /// Draws the route for all the tracks in the selected day.
-        /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="args">Parameter that contains the event data.</param>
-        private async void flyoutItem_Click(object sender, RoutedEventArgs e)
-        {
-            var flyoutItem = e.OriginalSource as MenuFlyoutItem;
-            try
-            {
-                for (int i = 0; i < listSource.View.Count; i++)
-                    if (flyoutItem.Text.Contains(listSource.View[i].ToString()))
-                        _selected = (DaySelectionItem)listSource.View[i];
-                 await DrawRoute();
-                FilterTime.Text = _selected.Name;
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        /// <summary>
-        /// Filters time and draws the tracks from the selected time interval.
-        /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="e">Parameter that contains the event data.</param>
-        private async void FilterItem_Click(object sender, RoutedEventArgs e)
-        {
-            var flyoutItem = e.OriginalSource as MenuFlyoutItem;
-            try
-            {
-                _filterTime = flyoutItem.Text;
-               await DrawRoute();
-            }
-            catch (Exception)
-            {
-            }
         }
     }
 }
