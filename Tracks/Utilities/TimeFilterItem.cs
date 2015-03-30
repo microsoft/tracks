@@ -23,35 +23,35 @@ using System;
 namespace Tracks.Utilities
 {
     /// <summary>
-    /// Day selection list item
+    /// Time filter list item
     /// </summary>
-    public class DaySelectionItem
+    public class TimeFilterItem
     {
         #region Properties
         /// <summary>
-        /// Name of the selected day
+        /// Filter time (in minutes)
         /// </summary>
-        public string Name { get; set; }
+        public uint Time { get; set; }
 
         /// <summary>
-        /// Selected day in DateTime format
+        /// Item name
         /// </summary>
-        public DateTime? Day { get; set; }
+        public String Name { get; set; }
         #endregion
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="name">Item name</param>
-        /// <param name="day">Item day</param>
-        public DaySelectionItem( String name, DateTime? day )
+        /// <param name="time">Filter time (in minutes)</param>
+        public TimeFilterItem( String name, uint time )
         {
             Name = name;
-            Day = day;
+            Time = time;
         }
 
         /// <summary>
-        /// Returns textual represenation of the item
+        /// Returns textual representation of the item
         /// </summary>
         /// <returns>Textual representation of the item</returns>
         public override string ToString()
@@ -60,3 +60,6 @@ namespace Tracks.Utilities
         }
     }
 }
+
+// end of file
+

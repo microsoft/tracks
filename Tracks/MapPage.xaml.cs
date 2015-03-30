@@ -29,15 +29,12 @@ using Windows.UI.Xaml.Navigation;
 using Tracks.Common;
 using Tracks.Utilities;
 using Windows.Devices.Geolocation;
-using System.Threading;
+using RouteTracker = Lumia.Sense.TrackPointMonitor;
 
-/// <summary>
-/// The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
-/// </summary>
 namespace Tracks
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// Page displaying user's tracks on a map
     /// </summary>
     public sealed partial class MapPage : Page
     {
@@ -45,52 +42,27 @@ namespace Tracks
         /// <summary>
         /// Navigation helper used to navigate through pages
         /// </summary>
-        private NavigationHelper _navigationHelper; 
+        private NavigationHelper _navigationHelper;
 
         /// <summary>
-        /// View model for this page
+        /// Day selection list items
         /// </summary>
-        private ObservableDictionary _defaultViewModel = new ObservableDictionary(); 
+        private readonly List<DaySelectionItem> _daySelectionList = new List<DaySelectionItem>();
 
         /// <summary>
-        /// Represents the selected item from the day selection list
+        /// Time filter list items
         /// </summary>
-        private static DaySelectionItem _selected; 
-
-        /// <summary>
-        /// Collection of options of type DaySelectionItem
-        /// </summary>
-        private readonly List<DaySelectionItem> _optionList = new List<DaySelectionItem>(); 
-
-        /// <summary>
-        /// Collection of stay durations
-        /// </summary>
-        private readonly List<string> _filterList = new List<string>(); 
+        private readonly List<TimeFilterItem> _timeFilterList = new List<TimeFilterItem>();
 
         /// <summary>
         /// Used for simplified access to app resources such as app UI strings.
         /// </summary>
-        ResourceLoader _loader = new ResourceLoader(); 
-
-        /// <summary>
-        /// Defines how small duration is shown
-        /// </summary>
-        private string _filterTime = "all";
+        ResourceLoader _resourceLoader = new ResourceLoader();
 
         /// <summary>
         /// Curent location index
         /// </summary>
-        int locationIndex = 0;
-
-        /// <summary>
-        /// Map Page instance
-        /// </summary>
-        public static MapPage _instanceMap;
-
-        /// <summary>
-        /// Synchronization object
-        /// </summary>
-        private SemaphoreSlim _sync = new SemaphoreSlim( 1 );
+        int _locationIndex = 0;
         #endregion
 
         /// <summary>
@@ -99,34 +71,37 @@ namespace Tracks
         public MapPage()
         {
             this.InitializeComponent();
-            if (_instanceMap == null)
-                _instanceMap = this;
-            this._navigationHelper = new NavigationHelper(this);
-            this._navigationHelper.LoadState += this.NavigationHelper_LoadState;
-            this._navigationHelper.SaveState += this.NavigationHelper_SaveState;
+            this.NavigationCacheMode = NavigationCacheMode.Required;
+
+            this._navigationHelper = new NavigationHelper( this );
             FillDateList();
-            FillFilterList();
-            this.listSource.Source = _optionList;
-            this.filterSource.Source = _filterList;
+            FillTimeFilterList();
+            DaySelectionSource.Source = _daySelectionList;
+            TimeFilterSource.Source = _timeFilterList;
+            FilterTime.Text = _daySelectionList[ 0 ].Name;
             TracksMap.MapServiceToken = "xxx";
-            if(_selected == null)
-                _selected = _optionList[0];
-            InitCore();
             // Activate and deactivate the SensorCore when the visibility of the app changes
-            Window.Current.VisibilityChanged += async (oo, ee) =>
+            Window.Current.VisibilityChanged += async ( oo, ee ) =>
             {
-                if (_tracker != null)
+                if( !ee.Visible )
                 {
-                    if (!ee.Visible)
+                    if( _tracker != null )
                     {
-                        await CallSensorcoreApiAsync(async () => { await _tracker.DeactivateAsync(); });
-                        await CallSensorcoreApiAsync(async () => { await _placeMonitor.DeactivateAsync(); });
+                        await CallSensorcoreApiAsync( async () => { await _tracker.DeactivateAsync(); } );
+                    }
+                }
+                else
+                {
+                    await ValidateSettingsAsync();
+                    if( _tracker == null )
+                    {
+                        await CallSensorcoreApiAsync( async () => { _tracker = await RouteTracker.GetDefaultAsync(); } );
                     }
                     else
                     {
-                        await CallSensorcoreApiAsync(async () => { await _tracker.ActivateAsync(); });
-                        await CallSensorcoreApiAsync(async () => { await _placeMonitor.ActivateAsync(); });
+                        await CallSensorcoreApiAsync( async () => { await _tracker.ActivateAsync(); } );
                     }
+                    await DrawRoute();
                 }
             };
         }
@@ -136,52 +111,36 @@ namespace Tracks
         /// </summary>
         private void FillDateList()
         {
-            // Current day
-            int today = (int)DateTime.Now.DayOfWeek; 
-            int count = 0;
-            for (int i = today; i >= 0; i--)
+            GeographicRegion userRegion = new GeographicRegion();
+            var userDateFormat = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter( "shortdate", new[] { userRegion.Code } );
+            for( int i = 0; i < 7; i++ )
             {
-                var item = new DaySelectionItem { Day = DateTime.Now.Date - TimeSpan.FromDays(count) };
-                var nameOfDay = System.Globalization.DateTimeFormatInfo.CurrentInfo.DayNames[i];
-                // Add an indicator to current day
-                if (count == 0)
+                var nameOfDay = System.Globalization.DateTimeFormatInfo.CurrentInfo.DayNames[ ( (int)DateTime.Now.DayOfWeek + 7 - i ) % 7 ];
+                if( i == 0 )
                 {
-                    nameOfDay += " " + _loader.GetString("Today");
+                    nameOfDay += " " + _resourceLoader.GetString( "Today" );
                 }
-                GeographicRegion userRegion = new GeographicRegion();
-                var userDateFormat = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shortdate", new[] { userRegion.Code });
-                var dateDefault = userDateFormat.Format(item.Day);
-                item.Name = nameOfDay + " " + dateDefault;
-                _optionList.Add(item);
-                count++;
-                // First day of the week, but not all weekdays still listed,
-                // continue from the last weekday
-                if (i == 0 && count <= 6)
-                {
-                    i = 7;
-                }
-                // All weekdays listed, exit the loop
-                else if (count == 7) 
-                {
-                    i = 0;
-                }
+                DateTime itemDate = DateTime.Now.Date - TimeSpan.FromDays( i );
+                _daySelectionList.Add( 
+                    new DaySelectionItem( 
+                        nameOfDay + " " + userDateFormat.Format( itemDate ), 
+                        itemDate ) );
             }
             // Add the option to show everything
-            _optionList.Add(new DaySelectionItem { Name = _loader.GetString("All") });
+            _daySelectionList.Add( new DaySelectionItem( _resourceLoader.GetString( "All" ), null ) );
         }
 
         /// <summary>
-        /// Fill the list with minutes, and in ascending order
+        /// Populates the time filter list
         /// </summary>
-        private void FillFilterList()
+        private void FillTimeFilterList()
         {
-            var minutes = _loader.GetString("minutes");
-            _filterList.Add("0 - 10 " + minutes);
-            _filterList.Add("15 " + minutes);
-            _filterList.Add("30 " + minutes);
-            _filterList.Add("60 " + minutes);
-            _filterList.Add(_loader.GetString("all"));
-            _filterTime = "all";
+            var minutes = _resourceLoader.GetString( "Minutes" );
+            _timeFilterList.Add( new TimeFilterItem( _resourceLoader.GetString( "All" ), 0 ) );
+            _timeFilterList.Add( new TimeFilterItem( ">= 0 - 10 " + minutes, 10 ) );
+            _timeFilterList.Add( new TimeFilterItem( ">= 15 " + minutes, 15 ) );
+            _timeFilterList.Add( new TimeFilterItem( ">= 30 " + minutes, 30 ) );
+            _timeFilterList.Add( new TimeFilterItem( ">= 60 " + minutes, 60 ) );
         }
 
         /// <summary>
@@ -192,107 +151,54 @@ namespace Tracks
             get { return this._navigationHelper; }
         }
 
-        /// <summary>
-        /// Gets the view model for this <see cref="Page"/>.
-        /// This can be changed to a strongly typed view model.
-        /// </summary>
-        public ObservableDictionary DefaultViewModel
-        {
-            get { return this._defaultViewModel; }
-        }
-
-        /// <summary>
-        /// Populates the page with content passed during navigation.  Any saved state is also
-        /// provided when recreating a page from a prior session.
-        /// </summary>
-        /// <param name="sender">
-        /// The source of the event; typically <see cref="NavigationHelper"/>
-        /// </param>
-        /// <param name="e">Event data that provides both the navigation parameter passed to
-        /// <see cref="Frame.Navigate(Type, Object)"/> when this page was initially requested and
-        /// a dictionary of state preserved by this page during an earlier
-        /// session.  The state will be null the first time a page is visited.</param>
-        private void NavigationHelper_LoadState(object sender, LoadStateEventArgs e)
-        {
-        }
-
-        /// <summary>
-        /// Preserves state associated with this page in case the application is suspended or the
-        /// page is discarded from the navigation cache.  Values must conform to the serialization
-        /// requirements of <see cref="SuspensionManager.SessionState"/>.
-        /// </summary>
-        /// <param name="sender">The source of the event; typically <see cref="NavigationHelper"/></param>
-        /// <param name="e">Event data that provides an empty dictionary to be populated with
-        /// serializable state.</param>
-        private void NavigationHelper_SaveState(object sender, SaveStateEventArgs e)
-        {
-        }
-
         #region NavigationHelper registration
         /// <summary>
         /// Called when a page becomes the active page in a frame.
         /// </summary>
         /// <param name="e">Provides data for non-cancelable navigation events</param>
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo( NavigationEventArgs e )
         {
-            this._navigationHelper.OnNavigatedTo(e);
+            this._navigationHelper.OnNavigatedTo( e );
+
+            if( e.NavigationMode == NavigationMode.Back )
+            {
+                await ValidateSettingsAsync();
+                if( _tracker == null )
+                {
+                    await CallSensorcoreApiAsync( async () => { _tracker = await RouteTracker.GetDefaultAsync(); } );
+                }
+                await DrawRoute();
+            }
         }
 
         /// <summary>
         /// Called when a page is no longer the active page in a frame.
         /// </summary>
         /// <param name="e">Provides data for non-cancelable navigation events</param>
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        protected override void OnNavigatedFrom( NavigationEventArgs e )
         {
-            this._navigationHelper.OnNavigatedFrom(e);
+            this._navigationHelper.OnNavigatedFrom( e );
         }
-
         #endregion
 
         /// <summary>
-        /// 
+        /// Time filter flyout change event handler
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void OnFiltered(ListPickerFlyout sender, ItemsPickedEventArgs e)
+        /// <param name="sender">Sender object</param>
+        /// <param name="e">Event arguments</param>
+        private async void TimeFilterFlyout_ItemsPicked( ListPickerFlyout sender, ItemsPickedEventArgs args )
         {
-            switch (FilterFlyout.SelectedIndex)
-            {
-                case 0:
-                    _filterTime = "0 - 10 minutes";
-                    break;
-                case 1:
-                    _filterTime = "15 minutes";
-                    break;
-                case 2:
-                    _filterTime = "30 minutes";
-                    break;
-                case 3:
-                    _filterTime = "60 minutes";
-                    break;
-                default:
-                    _filterTime = "all";
-                    break;
-            }
-            await _sync.WaitAsync();
-            try
-            {
-                await DrawRoute();
-            }
-            finally
-            {
-                _sync.Release();
-            }
+            await DrawRoute();
         }
 
         /// <summary>
-        /// Navigates to the About page of the application.
+        /// About button click event handler
         /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="e">Parameter that contains the event data.</param>
-        private void OnAboutClicked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        /// <param name="sender">Sender object</param>
+        /// <param name="e">Event arguments</param>
+        private void AboutButton_Click( object sender, RoutedEventArgs e )
         {
-            this.Frame.Navigate(typeof(AboutPage));
+            this.Frame.Navigate( typeof( AboutPage ) );
         }
 
         /// <summary>
@@ -300,24 +206,13 @@ namespace Tracks
         /// </summary>
         /// <param name="sender">The control that the action is for.</param>
         /// <param name="args">Parameter that contains the event data.</param>
-        private async void OnPicked(ListPickerFlyout sender, ItemsPickedEventArgs args)
+        private async void DateFlyout_ItemsPicked( ListPickerFlyout sender, ItemsPickedEventArgs args )
         {
-            if (args.AddedItems.Count == 1)
+            if( args.AddedItems.Count == 1 )
             {
-                _selected = (DaySelectionItem)args.AddedItems[0];
-                await _sync.WaitAsync();
-                try
-                {
-                    await DrawRoute();
-                }
-                finally
-                {
-                    _sync.Release();
-                }
-                FilterTime.Text = _selected.Name;
+                FilterTime.Text = ( sender.SelectedItem as DaySelectionItem ).Name;
+                await DrawRoute();
             }
-            else
-                _selected = _optionList[0];
         }
 
         /// <summary>
@@ -325,10 +220,10 @@ namespace Tracks
         /// </summary>
         /// <param name="sender">The control that the action is for.</param>
         /// <param name="e">Parameter that contains the event data.</param>
-        private void FullScreeButton_OnTapped(object sender, TappedRoutedEventArgs e)
+        private void FullScreeButton_OnTapped( object sender, TappedRoutedEventArgs e )
         {
             _fullScreen = !_fullScreen;
-            if (_fullScreen)
+            if( _fullScreen )
             {
                 CmdBar.Visibility = Visibility.Collapsed;
                 TopPanel.Visibility = Visibility.Collapsed;
@@ -343,31 +238,39 @@ namespace Tracks
         }
 
         /// <summary>
-        /// Go to Previous point
+        /// Previous location button click event handler
         /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="e">Parameter that contains the event data.</param>
-        private void GoToPreviousLocation(object sender, RoutedEventArgs e)
+        /// <param name="sender">Sender object</param>
+        /// <param name="e">Event arguments</param>
+        private void PreviousButton_Click( object sender, RoutedEventArgs e )
         {
-            locationIndex--;
-            if (locationIndex >= 0)
-                TracksMap.Center = new Geopoint(points[locationIndex].Position);
+            _locationIndex--;
+            if( _locationIndex >= 0 )
+            {
+                TracksMap.Center = new Geopoint( _points[ _locationIndex ].Position );
+            }
             else
-                locationIndex = 0;
+            {
+                _locationIndex = 0;
+            }
         }
-        
+
         /// <summary>
-        /// Go to Previous point
+        /// Next location button click event handler
         /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="e">Parameter that contains the event data.</param>
-        private void GoToNextLocation(object sender, RoutedEventArgs e)
+        /// <param name="sender">Sender object</param>
+        /// <param name="e">Event arguments</param>
+        private void NextButton_Click( object sender, RoutedEventArgs e )
         {
-            locationIndex++;
-            if (locationIndex < points.Count)
-                TracksMap.Center = new Geopoint(points[locationIndex].Position);
+            _locationIndex++;
+            if( _locationIndex < _points.Count )
+            {
+                TracksMap.Center = new Geopoint( _points[ _locationIndex ].Position );
+            }
             else
-                locationIndex = points.Count - 1;
+            {
+                _locationIndex = _points.Count - 1;
+            }
         }
     }
 }

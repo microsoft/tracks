@@ -28,9 +28,6 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
 
-/// <summary>
-/// The Pivot Application template is documented at http://go.microsoft.com/fwlink/?LinkID=391641 
-/// </summary>
 namespace Tracks
 {
     /// <summary>

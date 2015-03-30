@@ -9,8 +9,8 @@
     mc:Ignorable="d"
     Background="#F0A30A">
     <Page.Resources>
-        <CollectionViewSource x:Name="listSource"/>
-        <CollectionViewSource x:Name="filterSource"/>
+        <CollectionViewSource x:Name="DaySelectionSource"/>
+        <CollectionViewSource x:Name="TimeFilterSource"/>
     </Page.Resources>
     <Grid x:Name="LayoutRoot">
         <Grid.ChildrenTransitions>
@@ -41,26 +41,26 @@
         <CommandBar x:Name="CmdBar" Background="#F0A30A" Foreground="Black">
             <AppBarButton x:Uid="SelectButton" x:Name="SelectButton" Icon="Calendar" Label="day filter">
                 <AppBarButton.Flyout>
-                    <ListPickerFlyout x:Name="DateFlyout" ItemsSource="{Binding Source={StaticResource listSource}}" ItemsPicked="OnPicked"/>
+                    <ListPickerFlyout x:Name="DateFlyout" ItemsSource="{Binding Source={StaticResource DaySelectionSource}}" ItemsPicked="DateFlyout_ItemsPicked"/>
                 </AppBarButton.Flyout>
             </AppBarButton>
-            <AppBarButton x:Uid="FilterButton" x:Name="FilterButton" Icon="Clock" Label="time filter">
+            <AppBarButton x:Uid="TimeFilterButton" x:Name="TimeFilterButton" Icon="Clock" Label="time filter">
                 <AppBarButton.Flyout>
-                    <ListPickerFlyout x:Name="FilterFlyout" ItemsSource="{Binding Source={StaticResource filterSource}}" ItemsPicked="OnFiltered"/>
+                    <ListPickerFlyout x:Name="TimeFilterFlyout" ItemsSource="{Binding Source={StaticResource TimeFilterSource}}" ItemsPicked="TimeFilterFlyout_ItemsPicked" />
                 </AppBarButton.Flyout>
             </AppBarButton>
-            <AppBarButton x:Uid="PreviousButton" x:Name="PreviousButton" Label="previous routepoint" Click="GoToPreviousLocation">
+            <AppBarButton x:Uid="PreviousButton" x:Name="PreviousButton" Label="previous routepoint" Click="PreviousButton_Click">
                 <AppBarButton.Icon>
                     <BitmapIcon UriSource="/Assets/previous.png"/>
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Uid="NextButton" x:Name="NextButton" Label="next routepoint" Click="GoToNextLocation">
+            <AppBarButton x:Uid="NextButton" x:Name="NextButton" Label="next routepoint" Click="NextButton_Click">
                 <AppBarButton.Icon>
                     <BitmapIcon UriSource="/Assets/next.png"/>
                 </AppBarButton.Icon>
             </AppBarButton>
             <CommandBar.SecondaryCommands>
-                <AppBarButton x:Uid="AboutButton" x:Name="AboutButton" Label="" Click="OnAboutClicked"/>
+                <AppBarButton x:Uid="AboutButton" x:Name="AboutButton" Label="" Click="AboutButton_Click" />
             </CommandBar.SecondaryCommands>
         </CommandBar>
     </Page.BottomAppBar>

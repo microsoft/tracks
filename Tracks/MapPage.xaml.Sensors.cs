@@ -30,80 +30,64 @@ using Windows.UI.Xaml;
 using Windows.UI.Popups;
 using Windows.UI.Core;
 using Lumia.Sense;
-using Tracker = Lumia.Sense.TrackPointMonitor;
+using RouteTracker = Lumia.Sense.TrackPointMonitor;
 using Windows.Foundation;
 using Tracks.Utilities;
 using System.Linq;
+using Windows.Storage.Streams;
 
-/// <summary>
-/// The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
-/// </summary>
 namespace Tracks
 {
     /// <summary>
-    /// MapControl class
+    /// Page displaying user's tracks on a map (sensor related functions)
     /// </summary>
     public sealed partial class MapPage
     {
         #region Private members
         /// <summary>
-        /// Tracker object that identifies and maintains a list of visited points
+        /// Track point monitor instance
         /// </summary>
-        private Tracker _tracker;
+        private RouteTracker _tracker;
 
         /// <summary>
-        /// Used to verify if the option is set to full screen 
+        /// Are we currently in full screen mode?
         /// </summary>
         private bool _fullScreen;
 
         /// <summary>
-        /// holds all the pushpins in the map
+        /// Collection of track points
         /// </summary>
-        IList<PushPin> pins = null;
+        IList<TrackPoint> _points = null;
 
         /// <summary>
-        /// Collection of points
+        /// API set supported by the device
         /// </summary>
-        IList<TrackPoint> points = null;
-
-        /// <summary>
-        /// List of activities for a place
-        /// </summary>
-        List<Activity> activitiesToShow = new List<Activity>();
-
-        /// <summary>
-        /// Places object that identifies and maintains a list of visited places
-        /// </summary>
-        PlaceMonitor _placeMonitor = null;
+        uint _apiSet = 0;
         #endregion
 
         /// <summary>
-        /// Initialize SensorCore
+        /// Makes sure necessary settings are enabled in order to use SensorCore
         /// </summary>
-        private async void InitCore()
+        /// <returns>Asynchronous task</returns>
+        private async Task ValidateSettingsAsync()
         {
-            // await ActivityReader.Instance.Initialize();
             try
             {
-                // Following code assumes that device has new software(SensorCoreSDK1.1 based)
                 if( !( await TrackPointMonitor.IsSupportedAsync() ) )
                 {
-                    MessageDialog dlg = new MessageDialog( "Unfortunately this device does not support viewing TrackPoints places" );
+                    MessageDialog dlg = new MessageDialog( "Unfortunately this device does not support viewing tracks" );
                     await dlg.ShowAsync();
                     Application.Current.Exit();
                 }
                 else
                 {
-                    uint apiSet = await SenseHelper.GetSupportedApiSetAsync();
+                    _apiSet = await SenseHelper.GetSupportedApiSetAsync();
                     MotionDataSettings settings = await SenseHelper.GetSettingsAsync();
                     if( !settings.LocationEnabled )
                     {
-                        MessageDialog dlg = new MessageDialog( "In order to collect and view visited tracks you need to enable location in system settings. Do you want to open settings now? if no, applicatoin will exit", "Information" );
+                        MessageDialog dlg = new MessageDialog( "In order to collect and view visited tracks you need to enable location in system settings. Do you want to open settings now? if not, application will exit", "Information" );
                         dlg.Commands.Add( new UICommand( "Yes", new UICommandInvokedHandler( async ( cmd ) => await SenseHelper.LaunchLocationSettingsAsync() ) ) );
-                        dlg.Commands.Add( new UICommand( "No", new UICommandInvokedHandler( ( cmd ) =>
-                        {
-                            Application.Current.Exit();
-                        } ) ) );
+                        dlg.Commands.Add( new UICommand( "No", new UICommandInvokedHandler( ( cmd ) => { Application.Current.Exit(); } ) ) );
                         await dlg.ShowAsync();
                     }
                     if( !settings.PlacesVisited )
@@ -111,48 +95,21 @@ namespace Tracks
                         MessageDialog dlg = null;
                         if( settings.Version < 2 )
                         {
-                            //device which has old motion data settings.
-                            //this is equal to motion data settings on/off in old system settings(SDK1.0 based)
-                            dlg = new MessageDialog( "In order to collect and view visited tracks you need to enable Motion data in Motion data settings. Do you want to open settings now? if no, application will exit", "Information" );
+                            // Device has old Motion data settings
+                            dlg = new MessageDialog( "In order to collect and view visited tracks you need to enable 'Motion data collection' in Motion data settings. Do you want to open settings now? If not, application will exit.", "Information" );
                         }
                         else
                         {
-                            dlg = new MessageDialog( "In order to collect and view visited tracks you need to 'enable Places visited' and 'DataQuality to detailed' in Motion data settings. Do you want to open settings now? if no, application will exit", "Information" );
+                            dlg = new MessageDialog( "In order to collect and view visited tracks you need to enable 'Places visited' in Motion data settings. Do you want to open settings now? If not, application will exit.", "Information" );
                         }
                         dlg.Commands.Add( new UICommand( "Yes", new UICommandInvokedHandler( async ( cmd ) => await SenseHelper.LaunchSenseSettingsAsync() ) ) );
-                        dlg.Commands.Add( new UICommand( "No", new UICommandInvokedHandler( ( cmd ) =>
-                        {
-                            Application.Current.Exit();
-                        } ) ) );
+                        dlg.Commands.Add( new UICommand( "No", new UICommandInvokedHandler( ( cmd ) => { Application.Current.Exit(); } ) ) );
                         await dlg.ShowAsync();
                     }
                 }
             }
             catch( Exception )
             {
-            }
-
-            if( _tracker == null )
-            {
-                // Init SensorCore
-                if( await CallSensorcoreApiAsync( async () =>
-                {
-                    _tracker = await Tracker.GetDefaultAsync();
-                    _placeMonitor = await PlaceMonitor.GetDefaultAsync();
-                } ) )
-                {
-                    await ActivityReader.Instance().Initialize();
-                    await _sync.WaitAsync();
-                    try
-                    {
-                        await DrawRoute();
-                    }
-                    finally
-                    {
-                        _sync.Release();
-                    }
-                    FilterTime.Text = _selected != null ? _selected.Name : _loader.GetString( "NoTimespanSelected/Text" );
-                }
             }
         }
 
@@ -163,170 +120,93 @@ namespace Tracks
         {
             TracksMap.MapElements.Clear();
             TracksMap.Children.Clear();
-            if( pins != null )
-            {
-                pins.Clear();
-                pins = null;
-            }
-            pins = new List<PushPin>();
-            if( points != null )
-            {
-                points.Clear();
-                points = null;
-            }
+            _points = null;
             
             if( await CallSensorcoreApiAsync( async () =>
             {
                 // Get selected day routes, else all routes from last 10 days
-                if( _selected != null && !_selected.Name.Equals( "All", StringComparison.CurrentCultureIgnoreCase ) )
+                DaySelectionItem dayItem = ( DateFlyout.SelectedItem as DaySelectionItem );
+                if( dayItem.Day.HasValue )
                 {
-                    System.Diagnostics.Debug.WriteLine( "DrawRoute: " + _selected.Name );
-                    points = await _tracker.GetTrackPointsAsync( _selected.Day, TimeSpan.FromHours( 24 ) );
+                    _points = await _tracker.GetTrackPointsAsync( dayItem.Day.Value, TimeSpan.FromHours( 24 ) );
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine( "DrawRoute: Drawing all" );
-                    points = await _tracker.GetTrackPointsAsync( DateTime.Now - TimeSpan.FromDays( 10 ), TimeSpan.FromDays( 10 ) );
+                    _points = await _tracker.GetTrackPointsAsync( DateTime.Now - TimeSpan.FromDays( 10 ), TimeSpan.FromDays( 10 ) );
                 }
             } ) )
             {
-                // Make sure that there were RoutePoints for the timespan
-                if( points!=null && points.Count > 0 )
+                if( _points != null && _points.Count > 0 )
                 {
-                    // Returns list of activies occured during given time period
-                    await CallSensorcoreApiAsync(async () =>
+                    TimeSpan filterTime = TimeSpan.FromMinutes( ( TimeFilterFlyout.SelectedItem as TimeFilterItem ).Time );
+                    List<BasicGeoposition> path = new List<BasicGeoposition>();
+                    foreach( TrackPoint point in _points )
                     {
-                        ActivityReader.Instance().History = await ActivityReader.Instance().ActivityMonitorProperty.GetActivityHistoryAsync(DateTime.Today - TimeSpan.FromDays(10), TimeSpan.FromDays(10));
-                    });
-                    TracksMap.Center = new Geopoint( points[ 0 ].Position );
-                    var previous = new BasicGeoposition();
-                    bool first = true;
-                    int i = 0;
-                    for (int j = 1; j < points.Count; j++)
-                    {
-                           activitiesToShow.Clear();
-                           for (int k = 1; k < ActivityReader.Instance().History.Count; k++)
-                           {
-                               // Compare time of entry to the last location and the current location with the activity timestamp
-                               // Retrieve the activities in a list
-                               if ((ActivityReader.Instance().History.ElementAt(k-1).Timestamp.ToLocalTime()>=points.ElementAt(j - 1).Timestamp.ToLocalTime()) && (ActivityReader.Instance().History.ElementAt(k).Timestamp.ToLocalTime() < points.ElementAt(j).Timestamp.ToLocalTime()))
-                               {
-                                   if (!activitiesToShow.Contains(ActivityReader.Instance().History.ElementAt(k).Mode))
-                                   {
-                                       //Add the activity to the list
-                                       activitiesToShow.Add(ActivityReader.Instance().History.ElementAt(k).Mode);
-                                   }
-                               }
-                           }                    
-                        int time = 0;
-                        if (_filterTime.Equals("0 - 10 minutes"))
+                        if( filterTime.TotalMinutes == 0 ||
+                            point.LengthOfStay.CompareTo( filterTime ) >= 0 )
                         {
-                            time = 10;
-                        }
-                        else if (_filterTime.Equals("15 minutes"))
-                        {
-                            time = 15;
-                        }
-                        else if (_filterTime.Equals("30 minutes"))
-                        {
-                            time = 30;
-                        }
-                        else if (_filterTime.Equals("60 minutes"))
-                        {
-                            time = 60;
-                        }
-                        if (points[j].LengthOfStay.CompareTo(TimeSpan.FromMinutes(time)) <= 0 || _filterTime.ToLower().Equals("all"))
-                        {
-                            await CreateMapIcon(points[j], i);
-                            // Create a line connecting to the previous map point
-                            if (!first)
+                            path.Add( point.Position );
+                            if( _apiSet >= 2 )
                             {
-                                var mapShape = new MapPolyline
+                                // Place id is available starting from API set 2.
+                                // Draw map icon if there is a known place associated with this point.
+                                if( point.Id != 0 )
                                 {
-                                    Path = new Geopath(new List<BasicGeoposition> { previous, points[j].Position }),
-                                    StrokeThickness = 3,
-                                    StrokeColor = Color.FromArgb(255, 100, 100, 255),
-                                    StrokeDashed = false
-                                    
-                                };
-                                TracksMap.MapElements.Add(mapShape);
+                                    // Use larger icon if stay length was greater than 15 minutes
+                                    CreateMapIcon(
+                                        point,
+                                        point.LengthOfStay.CompareTo( TimeSpan.FromMinutes( 15 ) ) > 0 );
+                                }
                             }
-                            else
+                            else if( point.LengthOfStay.CompareTo( TimeSpan.FromMinutes( 5 ) ) > 0 )
                             {
-                                TracksMap.Center = new Geopoint(points[j].Position);
-                                TracksMap.ZoomLevel = 13;
-                                first = false;
+                                // If place id is not supported, draw icon if stay length was at least five minutes.
+                                // Use larger icon if stay length was greater than 15 minutes.
+                                CreateMapIcon(
+                                    point,
+                                    point.LengthOfStay.CompareTo( TimeSpan.FromMinutes( 15 ) ) > 0 );
                             }
-                            previous = points[j].Position;
-                            i = i + 1;
                         }
+                    }
+                    MapPolyline mapShape = new MapPolyline();
+                    mapShape.Path = new Geopath( path );
+                    mapShape.StrokeThickness = 3;
+                    mapShape.StrokeColor = Color.FromArgb( 255, 100, 100, 255 );
+                    mapShape.StrokeDashed = false;
+                    TracksMap.MapElements.Add( mapShape );
+                    TracksMap.ZoomLevel = 13;
+
+                    // Center map to latest location
+                    if( path.Count > 0 )
+                    {
+                        TracksMap.Center = new Geopoint( path.First() );
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Create icon for route points, smaller for those where lenght of stay was under 10 mins
+        /// Creates map icon for track point
         /// </summary>
-        /// <param name="p">TrackPoint that will be drawn on the map.</param>
-        private async Task CreateMapIcon( TrackPoint point, int pos)
+        /// <param name="point">Track point to create map icon for</param>
+        /// <param name="largeIcon">If <c>true</c> will use large icon, if <c>false</c> will use small icon</param>
+        private void CreateMapIcon( TrackPoint point, bool largeIcon )
         {
-            Place place = null;
-            await CallSensorcoreApiAsync( async () => place = await _placeMonitor.GetPlaceAtAsync( point.Timestamp ) );
-            pins.Add(new PushPin(point, new Geopoint(point.Position), place != null ? place.Kind.ToString() : "unknown", DisplayMembers(activitiesToShow)));
-            MapControl.SetLocation( pins[ pos ], new Geopoint( point.Position ) );
-            MapControl.SetNormalizedAnchorPoint( pins[ pos ], new Point( 0.15, 1 ) );
-            TracksMap.Children.Add( pins[ pos ] );
-        }
-
-        /// <summary>
-        /// Error handling for device level error conditions
-        /// </summary>
-        /// <param name="sender">The control that the action is for.</param>
-        /// <param name="args">Parameter that contains data for the AccesChanged event.</param>
-        public async void OnAccessChanged( DeviceAccessInformation sender, DeviceAccessChangedEventArgs args )
-        {
-            await Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
+            var icon = new MapIcon
             {
-                if( DeviceAccessStatus.DeniedByUser == args.Status )
-                {
-                    Debug.WriteLine( "Location has been disabled by the user. Enable access through the settings charm." );
-                }
-                else if( DeviceAccessStatus.DeniedBySystem == args.Status )
-                {
-                    Debug.WriteLine( "Location has been disabled by the system. The administrator of the device must enable location access through the location control panel." );
-                }
-                else if( DeviceAccessStatus.Unspecified == args.Status )
-                {
-                    Debug.WriteLine( "Location has been disabled by unspecified source. The administrator of the device may need to enable location access through the location control panel, then enable access through the settings charm." );
-                }
-                else if( DeviceAccessStatus.Allowed == args.Status )
-                {
-                }
-                else
-                {
-                    Debug.WriteLine( "Unknown device access information status" );
-                }
-            } );
-        }
-
-        /// <summary>
-        /// Display activities for given list
-        /// </summary>
-        /// <param name="activities">List of activities</param>
-        /// <returns>String item</returns>  
-        public string DisplayMembers(List<Activity> activities)
-        {
-            string displayActivities = string.Empty;
-            if (activities.Count != 0)
+                NormalizedAnchorPoint = new Windows.Foundation.Point( 0.5, 0.5 ),
+                Location = new Geopoint( point.Position )
+            };
+            if( largeIcon )
             {
-                displayActivities = string.Join(", ", activities.ToList());
+                icon.Image = RandomAccessStreamReference.CreateFromUri( new Uri( "ms-appx:///Assets/dot.png" ) );
             }
             else
             {
-                displayActivities = "Idle";
+                icon.Image = RandomAccessStreamReference.CreateFromUri( new Uri( "ms-appx:///Assets/dotSmall.png" ) );
             }
-            return displayActivities;
+            MapExtensions.SetValue( icon, point );
+            TracksMap.MapElements.Add( icon );
         }
 
         /// <summary>
@@ -351,19 +231,30 @@ namespace Tracks
                 switch( SenseHelper.GetSenseError( failure.HResult ) )
                 {
                     case SenseError.LocationDisabled:
-                        dialog = new MessageDialog( "Location has been disabled. Do you want to open Location settings now? If you choose no, application will exit.", "Information" );
-                        dialog.Commands.Add( new UICommand( "Yes", async cmd => await SenseHelper.LaunchLocationSettingsAsync() ) );
-                        dialog.Commands.Add( new UICommand( "No" ) );
+                        dialog = new MessageDialog( "In order to collect and view visited tracks you need to enable location in system settings. Do you want to open settings now? If not, application will exit.", "Information" );
+                        dialog.Commands.Add( new UICommand( "Yes", new UICommandInvokedHandler( async ( cmd ) => await SenseHelper.LaunchLocationSettingsAsync() ) ) );
+                        dialog.Commands.Add( new UICommand( "No", new UICommandInvokedHandler( ( cmd ) => { Application.Current.Exit(); } ) ) );
                         await dialog.ShowAsync();
                         new System.Threading.ManualResetEvent( false ).WaitOne( 500 );
                         return false;
                     case SenseError.SenseDisabled:
-                        dialog = new MessageDialog( "Motion data has been disabled. Do you want to open Motion data settings now? If you choose no, application will exit.", "Information" );
-                        dialog.Commands.Add( new UICommand( "Yes", async cmd => await SenseHelper.LaunchSenseSettingsAsync() ) );
-                        dialog.Commands.Add( new UICommand( "No" ) );
+                    {
+                        MotionDataSettings settings = await SenseHelper.GetSettingsAsync();
+                        if( settings.Version < 2 )
+                        {
+                            // Device has old Motion data settings
+                            dialog = new MessageDialog( "In order to collect and view visited tracks you need to enable 'Motion data collection' in Motion data settings. Do you want to open settings now? If not, application will exit.", "Information" );
+                        }
+                        else
+                        {
+                            dialog = new MessageDialog( "In order to collect and view visited tracks you need to enable 'Places visited' in Motion data settings. Do you want to open settings now? if not, application will exit.", "Information" );
+                        }
+                        dialog.Commands.Add( new UICommand( "Yes", new UICommandInvokedHandler( async ( cmd ) => await SenseHelper.LaunchSenseSettingsAsync() ) ) );
+                        dialog.Commands.Add( new UICommand( "No", new UICommandInvokedHandler( ( cmd ) => { Application.Current.Exit(); } ) ) );
                         await dialog.ShowAsync();
                         new System.Threading.ManualResetEvent( false ).WaitOne( 500 );
                         return false;
+                    }
                     default:
                         return false;
                 }
