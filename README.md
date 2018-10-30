@@ -16,9 +16,9 @@ installed.
 
 Using the Windows Phone 8.1 SDK:
 
-1. Open the SLN file: File > Open Project, select the file `tracks.sln`
-2. Remove the "AnyCPU" configuration (not supported by the Lumia SensorCore SDK)
-or simply select ARM
+1. Open the SLN file: File > Open Project, select the file `tracks.sln`.
+2. Remove the "AnyCPU" configuration (not supported by the Lumia SensorCore SDK).
+or simply select ARM.
 3. Select the target 'Device'.
 4. Press F5 to build the project and run it on the device.
 
@@ -33,9 +33,7 @@ http://msdn.microsoft.com/en-us/library/gg588378%28v=vs.92%29.aspx
 **Important files and classes:**
 
 The core of this app's implementation is in MapPage.xaml.Sensors.cs. We can get 
-the known track points from the TrackPointMonitor class by querying the 
-GetTrackPointsAsync method. The list will include all track points that the phone 
-has registered within the timespan provided.
+the known track points from the TrackPointMonitor class by querying the GetTrackPointsAsync method. The list will include all track points that the phone has registered within the timespan provided.
 
 The API is called through the CallSensorcoreApiAsync() helper function, which helps
 handling the typical errors, like required features being disabled in the system
@@ -60,14 +58,14 @@ file the capabilities required for it to work:
 
 3. Version history
 --------------------------------------------------------------------------------
-* Version 1.2.1.3: Updated to use latest Lumia SensorCore SDK 1.1 Preview
-* Version 1.2.1.1: Some bug fixes made in this release
-* Version 1.2.1: Bug fixes
+* Version 1.2.1.3: Updated to use latest Lumia SensorCore SDK 1.1 Preview.
+* Version 1.2.1.1: Some bug fixes made in this release.
+* Version 1.2.1: Bug fixes.
 * Version 1.2:
- * Updated to use version 1.0 of Lumia SensorCore SDK
- * Full screen mode added
- * Overlay text indicating the active date filter selection added on the map view
- * Default/opening view changed to “Today” (from previous “All”)
+ * Updated to use version 1.0 of Lumia SensorCore SDK.
+ * Full screen mode added.
+ * Overlay text indicating the active date filter selection added on the map view.
+ * Default/opening view changed to “Today” (from previous “All”).
 * Version 1.0: The first release.
 
 
